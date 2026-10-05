@@ -131,9 +131,10 @@ namespace FirstADOConsoleApp
             using (SqlConnection con = new SqlConnection(connectString))
             {
                 con.Open();
-                string query = "update Bikeshop set Name =@Name , price=@Price";
+                string query = "update Bikeshop set Name =@Name , price=@Price where Id = @Id";
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
+                    cmd.Parameters.AddWithValue("@Id", id);
                     cmd.Parameters.AddWithValue("@Name",name);
                     cmd.Parameters.AddWithValue("@Price",price);
                     var rowAffected = cmd.ExecuteNonQuery();
