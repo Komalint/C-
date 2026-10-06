@@ -123,7 +123,10 @@ namespace FirstADOConsoleApp
                 Console.WriteLine("3 - Get Bike By Id");
                 Console.WriteLine("4 - Update Bike");
                 Console.WriteLine("5 - Delete Bike");
-                Console.WriteLine("6 - Exit");
+                Console.WriteLine("6 - Store data in DataTable");
+                Console.WriteLine("7 - Store data in DataSet");
+                Console.WriteLine("8 - Finding Data From stored procedure to get row by id");
+                Console.WriteLine("9 - Exit");
                 Console.Write("\nEnter your choice: ");
 
                 int choice;
@@ -207,6 +210,24 @@ namespace FirstADOConsoleApp
                         break;
 
                     case 6:
+                        repo.storeInDataTable();
+                        Console.WriteLine("stored in Data table");
+                        break;
+
+                    case 7:
+                        repo.storeInDataSet();
+                        Console.WriteLine("stored in Data set");
+                        break;
+
+                    case 8:
+                        Console.Write("Enter Bike Id: ");
+                        int inputId = Convert.ToInt32(Console.ReadLine());
+
+                        repo.getByProcedure(inputId);
+                        Console.WriteLine("Bike Details fetched Successfully!");
+                        break;
+
+                    case 9:
                         return;
 
                     default:
@@ -217,6 +238,9 @@ namespace FirstADOConsoleApp
                 Console.WriteLine("\nPress any key to continue...");
                 Console.ReadKey();
             }
+
+
+
         }
 
 

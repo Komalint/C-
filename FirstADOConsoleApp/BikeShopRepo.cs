@@ -147,5 +147,106 @@ namespace FirstADOConsoleApp
                 }
             }
         }
+
+
+        // storing in data table
+        
+        public void storeInDataTable()
+        {
+            try 
+            {
+                using (SqlConnection con = new SqlConnection(connectString))
+                {
+                    string query = "select * from  Bikeshop";
+                    SqlDataAdapter da = new SqlDataAdapter(query, con);
+                    da.SelectCommand.CommandType = CommandType.Text;
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        Console.WriteLine($"ID : {row["Id"]} , Bike Name : {row["Name"]}, Pricing : {row["Price"]} ");
+                    }
+                }
+            }
+            catch(Exception e) { 
+                Console.WriteLine($"OOPs something went wrong{e.ToString()}");
+            }
+            
+        }
+
+
+        // storing in data set
+        public void storeInDataSet()
+        {
+            try
+            {
+                using (SqlConnection con = new SqlConnection(connectString))
+                {
+                    string query = "select * from  Bikeshop";
+                    SqlDataAdapter da = new SqlDataAdapter(query, con);
+                    da.SelectCommand.CommandType = CommandType.Text;
+                    DataSet ds = new DataSet();
+                    da.Fill(ds);
+                    ds.Tables[0].TableName = "BikePrice";
+                    foreach (DataRow row in ds.Tables["BikePrice"].Rows)
+                    {
+                        Console.WriteLine($"ID : {row["Id"]} , Bike Name : {row["Name"]}, Pricing : {row["Price"]} ");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"OOPs something went wrong{e.ToString()}");
+            }
+            
+        }
+
+
+        // use procedure *simple procedure to get by id*
+        public void getByProcedure(int id)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectString))
+                {
+                    //Create the Command Object
+                    SqlCommand cmd = new SqlCommand()
+                    {
+                        CommandText = "udp_getBike_data",
+                        Connection = connection,
+                        CommandType = CommandType.StoredProcedure,
+                    };
+                    SqlParameter param1 = new SqlParameter()
+                    {
+                        ParameterName = "@id", //parameter name in actual sql query
+                        SqlDbType = SqlDbType.Int,
+                        Value = id,
+                        Direction = ParameterDirection.Input,
+                    };
+                    cmd.Parameters.Add(param1);
+                    connection.Open();
+                    cmd.Parameters[0].Value = id;
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    if (reader.Read())
+                    {
+                        Console.WriteLine(
+                            $"ID: {reader["Id"]}, " +
+                            $"Name: {reader["Name"]}, " +
+                            $"Price: {reader["Price"]}"
+                        );
+                    }
+                    else
+                    {
+                        Console.WriteLine("Bike not found.");
+                    }
+                }
+            }
+            catch(Exception ex) 
+            {
+                Console.WriteLine($"Exception Occurred: {ex.Message}");
+            }
+        }
+
     }
 }
