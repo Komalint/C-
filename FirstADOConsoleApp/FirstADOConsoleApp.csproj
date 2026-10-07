@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BikeShap.cs" />
+    <Compile Include="BikeshopProcRepo.cs" />
     <Compile Include="BikeShopRepo.cs" />
     <Compile Include="DStudents.cs" />
     <Compile Include="Program.cs" />

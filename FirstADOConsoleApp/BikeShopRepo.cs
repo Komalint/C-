@@ -223,6 +223,7 @@ namespace FirstADOConsoleApp
                         Value = id,
                         Direction = ParameterDirection.Input,
                     };
+
                     cmd.Parameters.Add(param1);
                     connection.Open();
                     cmd.Parameters[0].Value = id;

@@ -112,6 +112,7 @@ namespace FirstADOConsoleApp
         public static void Main(string[] args)
         {
             BikeShopRepo repo = new BikeShopRepo();
+            BikeshopProcRepo repoP = new BikeshopProcRepo();
 
             while (true)
             {
@@ -126,7 +127,12 @@ namespace FirstADOConsoleApp
                 Console.WriteLine("6 - Store data in DataTable");
                 Console.WriteLine("7 - Store data in DataSet");
                 Console.WriteLine("8 - Finding Data From stored procedure to get row by id");
-                Console.WriteLine("9 - Exit");
+                
+                Console.WriteLine("9 - Update Bike using proc");
+                Console.WriteLine("10 - Delete Bike using proc");
+                Console.WriteLine("11 - insert Bike using proc");
+                Console.WriteLine("12 - Get All Bike using proc");
+                Console.WriteLine("13 - Exit");
                 Console.Write("\nEnter your choice: ");
 
                 int choice;
@@ -227,7 +233,36 @@ namespace FirstADOConsoleApp
                         Console.WriteLine("Bike Details fetched Successfully!");
                         break;
 
+                    
                     case 9:
+                        Console.Write("Enter Bike Id: ");
+                        int inpId = Convert.ToInt32(Console.ReadLine());
+                        Console.Write("Enter Bike Name: ");
+                        string inpN = Convert.ToString(Console.ReadLine());
+                        Console.Write("Enter Bike Price: ");
+                        double inpP = Convert.ToDouble(Console.ReadLine());
+                        repoP.updateBikeDataByProc(inpId,inpN,inpP);
+                        break;
+
+                    case 10:
+                        Console.Write("Enter Bike Id: ");
+                        int inpI = Convert.ToInt32(Console.ReadLine());
+                        repoP.deleteBikeDataByProc(inpI);
+                        break;
+
+                    case 11:
+                        Console.Write("Enter Bike Name: ");
+                        string inpNi = Convert.ToString(Console.ReadLine());
+                        Console.Write("Enter Bike Price: ");
+                        double inpPi = Convert.ToDouble(Console.ReadLine());
+                        repoP.insertBikeDataByProc(inpNi, inpPi);
+                        break;
+
+                    case 12:
+                        repoP.getAllBikesByProcedure();
+                        break;
+
+                     case 13:
                         return;
 
                     default:
