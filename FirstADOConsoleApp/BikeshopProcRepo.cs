@@ -166,6 +166,61 @@ namespace FirstADOConsoleApp
         }
 
 
+        public void getDataByProcedureDataSet(int id)
+        {
+            try
+            {
+                SqlParameter[] paramList =
+                {
+             new SqlParameter("@id", id)
+         };
+
+                DataSet ds = ExecuteStoredProcedureReturnDataSet
+                (
+                    conStr,
+                    "udp_getBike_data",
+                    paramList
+                );
+
+                Console.WriteLine("udp_getBike_data Result:");
+
+                foreach (DataRow row in ds.Tables[0].Rows)
+                {
+                    Console.WriteLine
+                        (
+                        row["Id"] + ", " +
+                        row["Name"] + ", " +
+                        row["Price"]
+                        );
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Method failed with error message - {e.Message}");
+            }
+        }
+        public static DataSet ExecuteStoredProcedureReturnDataSet(string connectionString, string procedureName, params SqlParameter[]
+            paramterList)
+        {
+            DataSet dataSet = new DataSet();
+            using (var sqlConnection = new SqlConnection(connectionString))
+            {
+                using (var command = sqlConnection.CreateCommand())
+                {
+                    using (SqlDataAdapter sda = new SqlDataAdapter(command))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.CommandText = procedureName;
+                        if (paramterList != null)
+                        {
+                            command.Parameters.AddRange(paramterList);
+                        }
+                        sda.Fill(dataSet);
+                    }
+                }
+            }
+            return dataSet;
+        }
 
 
     }

@@ -132,7 +132,8 @@ namespace FirstADOConsoleApp
                 Console.WriteLine("10 - Delete Bike using proc");
                 Console.WriteLine("11 - insert Bike using proc");
                 Console.WriteLine("12 - Get All Bike using proc");
-                Console.WriteLine("13 - Exit");
+                Console.WriteLine("13 - Get dataset by procedure**");
+                Console.WriteLine("14 - Exit");
                 Console.Write("\nEnter your choice: ");
 
                 int choice;
@@ -262,7 +263,15 @@ namespace FirstADOConsoleApp
                         repoP.getAllBikesByProcedure();
                         break;
 
-                     case 13:
+                    case 13:
+                        Console.Write("Enter Bike Id: ");
+                        int inptId = Convert.ToInt32(Console.ReadLine());
+
+                        repoP.getDataByProcedureDataSet(inptId);
+                        Console.WriteLine("Bike Details fetched Successfully using id!");
+                        break;
+
+                    case 14:
                         return;
 
                     default:
