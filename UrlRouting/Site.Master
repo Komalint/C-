@@ -6,7 +6,7 @@
 <head runat="server">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><%: Page.Title %> - My ASP.NET Application</title>
+    <title><%: Page.Title %> - ASP.NET Application</title>
 
     <asp:PlaceHolder runat="server">
         <%: Scripts.Render("~/bundles/modernizr") %>
@@ -15,13 +15,13 @@
     <webopt:bundlereference runat="server" path="~/Content/css" />
     <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server">
+    </asp:ContentPlaceHolder>
 </head>
 <body>
     <form runat="server">
         <asp:ScriptManager runat="server">
             <Scripts>
-                <%--To learn more about bundling scripts in ScriptManager see https://go.microsoft.com/fwlink/?LinkID=301884 --%>
-                <%--Framework Scripts--%>
                 <asp:ScriptReference Name="MsAjaxBundle" />
                 <asp:ScriptReference Name="jquery" />
                 <asp:ScriptReference Name="WebForms.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebForms.js" />
@@ -33,37 +33,111 @@
                 <asp:ScriptReference Name="WebParts.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebParts.js" />
                 <asp:ScriptReference Name="Focus.js" Assembly="System.Web" Path="~/Scripts/WebForms/Focus.js" />
                 <asp:ScriptReference Name="WebFormsBundle" />
-                <%--Site Scripts--%>
             </Scripts>
         </asp:ScriptManager>
 
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+        <!-- Clean Navigation Bar -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container">
-                <a class="navbar-brand" runat="server" href="~/">Application name</a>
-                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Toggle navigation" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand fw-bold" runat="server" href="~/">Home</a>
+
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                    aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item"><a class="nav-link" runat="server" href="~/">Home</a></li>
-                        <li class="nav-item"><a class="nav-link" runat="server" href="~/About">About</a></li>
-                        <li class="nav-item"><a class="nav-link" runat="server" href="~/Contact">Contact</a></li>
+
+                <div class="collapse navbar-collapse" id="navbarContent">
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                        <!-- URL Routing Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="routingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                URL Routing
+                            </a>
+                            <ul class="dropdown-menu shadow-sm" aria-labelledby="routingDropdown">
+                                <li><a class="dropdown-item" runat="server" href="~/Articles/Search">Search Article by ID</a></li>
+                                <li><a class="dropdown-item" runat="server" href="~/Articles/1/Dropdown-Validation">Sample: Article 1</a></li>
+                                <li><a class="dropdown-item" runat="server" href="~/Articles/2/.NET-Assemblies">Sample: Article 2</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- State Management Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="stateDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                State Management
+                            </a>
+                            <ul class="dropdown-menu shadow-sm" aria-labelledby="stateDropdown">
+                                <li><a class="dropdown-item" runat="server" href="~/Session/Login">Session Login</a></li>
+                                <li><a class="dropdown-item" runat="server" href="~/Session/Dashboard">Session Dashboard</a></li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li><a class="dropdown-item" runat="server" href="~/State/User">QueryString and Cookie Demo</a></li>
+                                <li><a class="dropdown-item" runat="server" href="~/State/Dashboard">User Dashboard</a></li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li><a class="dropdown-item" runat="server" href="~/State/Counter">ViewState and Counter Demo</a></li>
+                            </ul>
+                        </li>
+
+                        <!-- AJAX Checker -->
+                        <li class="nav-item">
+                            <a class="nav-link" runat="server" href="~/Ajax/CheckUsername">AJAX Checker</a>
+                        </li>
+
+                        <!-- Product Entry -->
+                        <li class="nav-item">
+                            <a class="nav-link" runat="server" href="~/Products/Add">Product Entry</a>
+                        </li>
+
+                        <!-- Search History -->
+                        <li class="nav-item">
+                            <a class="nav-link" runat="server" href="~/SearchHistory">
+                                Search History
+                            </a>
+                        </li>
+
+                        <!-- About -->
+                        <li class="nav-item">
+                            <a class="nav-link" runat="server" href="~/About">About</a>
+                        </li>
                     </ul>
+
+                    <!-- Search Box -->
+                    <div class="d-flex ms-4">
+
+                        <asp:TextBox
+                            ID="txtSearch"
+                            runat="server"
+                            CssClass="form-control rounded-start"
+                            Width="280px"
+                            placeholder="Enter keyword..." />
+
+                        <asp:Button
+                            ID="btnSearch"
+                            runat="server"
+                            Text="🔍"
+                            CssClass="btn btn-warning rounded-end"
+                            OnClick="btnSearch_Click"
+                             />
+
+                    </div>
+
+
                 </div>
             </div>
         </nav>
-        <div class="container body-content">
+
+        <!-- Main Content Area -->
+        <div class="container body-content py-4">
             <asp:ContentPlaceHolder ID="MainContent" runat="server">
             </asp:ContentPlaceHolder>
-            <hr />
-            <footer>
-                <p>&copy; <%: DateTime.Now.Year %> - My ASP.NET Application</p>
-            </footer>
         </div>
+
+        <!-- Clean Footer -->
+        <footer class="border-top py-3 mt-auto bg-light text-center text-muted">
+            <div class="container">
+                <p class="mb-0 small">&copy; <%: DateTime.Now.Year %> - ASP.NET WebForms Application</p>
+            </div>
+        </footer>
     </form>
-    <asp:PlaceHolder runat="server">
-        <%: Scripts.Render("~/Scripts/bootstrap.js") %>
-    </asp:PlaceHolder>
+
+    <script src="<%= ResolveUrl("~/Scripts/bootstrap.bundle.min.js") %>"></script>
 </body>
 </html>

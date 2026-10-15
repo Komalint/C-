@@ -1,131 +1,37 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="Route1.aspx.cs" Inherits="UrlRouting.Route1" %>
+<%@ Page Title="Article Search" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Route1.aspx.cs" Inherits="UrlRouting.Route1" %>
 
-<!DOCTYPE html>
+<asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head runat="server">
-    <title>Article Search</title>
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="app-card">
+                <div class="app-card-header text-center">
+                    <h3 class="fw-bold mb-1">Search Article By ID</h3>
+                    <p class="text-muted small mb-0">URL Routing Demonstration</p>
+                </div>
 
-    <style>
-        body {
-            font-family: Segoe UI;
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 0;
-        }
+                <div class="mb-3">
+                    <asp:Label ID="lblArticleId" runat="server" CssClass="form-label fw-semibold" Text="Article ID:"></asp:Label>
+                    <asp:TextBox ID="txtArticleId" runat="server" CssClass="form-control" placeholder="Enter ID (e.g. 1, 2, 3, 4)"></asp:TextBox>
+                </div>
 
-        .header {
-            background-color: #0d6efd;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 28px;
-            font-weight: bold;
-        }
+                <div class="d-grid mb-3">
+                    <asp:Button ID="btnView" runat="server" Text="View Article" CssClass="btn btn-primary" OnClick="btnView_Click" />
+                </div>
 
-        .card {
-            width: 500px;
-            margin: 40px auto;
-            background-color: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
-        }
+                <asp:Label ID="lblMessage" runat="server" CssClass="d-block mb-3 fw-semibold text-center small"></asp:Label>
 
-        .title {
-            text-align: center;
-            font-size: 22px;
-            color: #333;
-            margin-bottom: 25px;
-        }
-
-        .lbl {
-            font-weight: 600;
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .txtbox {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            margin-bottom: 20px;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            background-color: #0d6efd;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        .btn:hover {
-            background-color: #0b5ed7;
-        }
-
-        .info {
-            margin-top: 20px;
-            background-color: #eef5ff;
-            padding: 12px;
-            border-radius: 6px;
-            color: #444;
-        }
-    </style>
-
-</head>
-<body>
-
-    <form id="form1" runat="server">
-
-        <div class="header">
-            Article Portal
-        </div>
-
-        <div class="card">
-
-            <div class="title">
-                Search Article By ID
+                <div class="p-3 bg-light border rounded small mt-3">
+                    <strong>Sample Article IDs:</strong>
+                    <ul class="mb-0 mt-1 ps-3">
+                        <li>ID 1: Dropdown Validation (Articles/1/Dropdown-Validation)</li>
+                        <li>ID 2: .NET Assemblies (Articles/2/.NET-Assemblies)</li>
+                        <li>ID 3: BinaryReader/BinaryWriter (Articles/3/BinaryReader-BinaryWriter)</li>
+                        <li>ID 4: StreamWriter (Articles/4/StreamWriter)</li>
+                    </ul>
+                </div>
             </div>
-
-            <asp:Label ID="lblArticleId"
-                runat="server"
-                CssClass="lbl"
-                Text="Article ID">
-            </asp:Label>
-
-            <asp:TextBox ID="txtArticleId"
-                runat="server"
-                CssClass="txtbox"
-                placeholder="Enter Article ID">
-            </asp:TextBox>
-
-            <asp:Button ID="btnView"
-                runat="server"
-                Text="View Article"
-                CssClass="btn"
-                OnClick="btnView_Click" />
-
-            <div class="info">
-                Available Article IDs:
-                <br />
-                1 - Dropdown Validation
-                <br />
-                2 - .NET Assemblies
-                <br />
-                3 - BinaryReader/BinaryWriter
-                <br />
-                4 - StreamWriter
-            </div>
-
         </div>
+    </div>
 
-    </form>
-
-</body>
-</html>
-``
+</asp:Content>

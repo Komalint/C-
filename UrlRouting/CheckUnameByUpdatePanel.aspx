@@ -1,239 +1,53 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="CheckUnameByUpdatePanel.aspx.cs" Inherits="UrlRouting.CheckUnameByUpdatePanel" %>
+<%@ Page Title="Username Availability Checker" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="CheckUnameByUpdatePanel.aspx.cs" Inherits="UrlRouting.CheckUnameByUpdatePanel" %>
 
-<!DOCTYPE html>
+<asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head runat="server">
-    <title>Username Availability Checker</title>
-
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Segoe UI;
-            background: #f4f6f9;
-        }
-
-        .header {
-            background: #0d6efd;
-            color: white;
-            text-align: center;
-            padding: 20px;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .container {
-            width: 500px;
-            margin: 50px auto;
-        }
-
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0px 4px 15px rgba(0,0,0,0.15);
-        }
-
-        .title {
-            text-align: center;
-            font-size: 22px;
-            margin-bottom: 25px;
-            color: #333;
-        }
-
-        table {
-            width: 100%;
-        }
-
-        td {
-            padding: 10px;
-        }
-
-        .txt {
-            width: 95%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-
-        .btn {
-            background: #0d6efd;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
-            width: 100%;
-            cursor: pointer;
-            font-size: 15px;
-        }
-
-        .btn:hover {
-            background: #0b5ed7;
-        }
-
-        .status {
-            margin-top: 5px;
-            font-weight: bold;
-        }
-
-        .availability {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 10px;
-            color: #0d6efd;
-            font-weight: bold;
-        }
-    </style>
-
-</head>
-<body>
-
-    <form id="form1" runat="server">
-
-        <asp:ScriptManager ID="ScriptManager1" runat="server">
-        </asp:ScriptManager>
-
-        <div class="header">
-            Username Availability Checker
-        </div>
-
-        <div class="container">
-
-            <div class="card">
-
-                <div class="title">
-                    Registration Form
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="app-card">
+                <div class="app-card-header text-center">
+                    <h3 class="fw-bold mb-1">Username Availability Checker</h3>
+                    <p class="text-muted small mb-0">Asynchronous check using ASP.NET UpdatePanel</p>
                 </div>
 
-                <asp:UpdateProgress ID="UpdateProgress1"
-                    runat="server"
-                    AssociatedUpdatePanelID="UpdatePanel1">
-
+                <asp:UpdateProgress ID="UpdateProgress1" runat="server" AssociatedUpdatePanelID="UpdatePanel1">
                     <ProgressTemplate>
-
-                        <div class="loading">
-
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c7/Loading_2.gif"
-                                width="30"
-                                height="30"
-                                alt="Loading" />
-
-                            <br />
-
-                            Checking Username...
-
+                        <div class="alert alert-info py-2 mb-3 small d-flex align-items-center" role="alert">
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span>Checking username availability...</span>
                         </div>
-
                     </ProgressTemplate>
-
                 </asp:UpdateProgress>
 
                 <asp:UpdatePanel ID="UpdatePanel1" runat="server">
-
                     <ContentTemplate>
+                        <div class="mb-3">
+                            <asp:Label ID="lblUsernameLabel" runat="server" CssClass="form-label fw-semibold" Text="Username:"></asp:Label>
+                            <asp:TextBox ID="txtun" runat="server" CssClass="form-control"
+                                AutoPostBack="true" OnTextChanged="CheckUserNameAvailability"
+                                placeholder="Type username and press Tab">
+                            </asp:TextBox>
+                            
+                            <div id="checkun" runat="server" visible="false" class="mt-2">
+                                <asp:Label ID="lblmsg" runat="server" CssClass="fw-semibold d-block small"></asp:Label>
+                            </div>
+                        </div>
 
-                        <table>
+                       
 
-                            <tr>
-                                <td>Username</td>
+                        <div class="d-grid mb-3">
+                            <asp:Button ID="txtbtn" runat="server" Text="Register" CssClass="btn btn-primary" OnClick="txtbtn_Click" />
+                        </div>
 
-                                <td>:</td>
-
-                                <td>
-                                    <asp:TextBox ID="txtun"
-                                        runat="server"
-                                        CssClass="txt"
-                                        AutoPostBack="true"
-                                        OnTextChanged="CheckUserNameAvailability">
-                                    </asp:TextBox>
-                                </td>
-                            </tr>
-
-                            <tr>
-
-                                <td></td>
-                                <td></td>
-
-                                <td>
-
-                                    <div id="checkun"
-                                        runat="server"
-                                        visible="false"
-                                        class="availability">
-
-                                        <asp:Label ID="lblmsg"
-                                            runat="server"
-                                            CssClass="status">
-                                        </asp:Label>
-
-                                    </div>
-
-                                </td>
-
-                            </tr>
-
-                            <tr>
-
-                                <td>Password</td>
-
-                                <td>:</td>
-
-                                <td>
-                                    <asp:TextBox ID="txtpwd"
-                                        runat="server"
-                                        CssClass="txt"
-                                        TextMode="Password">
-                                    </asp:TextBox>
-                                </td>
-
-                            </tr>
-
-                            <tr>
-
-                                <td>Confirm Password</td>
-
-                                <td>:</td>
-
-                                <td>
-                                    <asp:TextBox ID="txtconpwd"
-                                        runat="server"
-                                        CssClass="txt"
-                                        TextMode="Password">
-                                    </asp:TextBox>
-                                </td>
-
-                            </tr>
-
-                            <tr>
-
-                                <td colspan="3">
-
-                                    <asp:Button ID="txtbtn"
-                                        runat="server"
-                                        Text="SUBMIT"
-                                        CssClass="btn" />
-
-                                </td>
-
-                            </tr>
-
-                        </table>
-
+                        <asp:Label ID="lblFormFeedback" runat="server" CssClass="d-block text-center fw-semibold small"></asp:Label>
                     </ContentTemplate>
-
                 </asp:UpdatePanel>
 
+                <div class="p-3 bg-light border rounded small mt-3">
+                    <strong>Note:</strong> When you leave the Username box, an asynchronous postback is fired without reloading the page.
+                </div>
             </div>
-
         </div>
+    </div>
 
-    </form>
-
-</body>
-</html>
+</asp:Content>
