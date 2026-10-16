@@ -21,7 +21,7 @@ namespace WebServicesPractice
 
     public class WebService : System.Web.Services.WebService
     {
-        string cnStr = ConfigurationManager.ConnectionStrings["DBConn"].ConnectionString ;
+        string cnStr = ConfigurationManager.ConnectionStrings["DBConn"].ConnectionString;
         [WebMethod]
         public XmlElement GetUserDetails(string userName)
         {
@@ -57,6 +57,135 @@ namespace WebServicesPractice
             XmlDataDocument xmldata = new XmlDataDocument(ds);
             XmlElement xmlElement = xmldata.DocumentElement;
             return xmlElement;
+        }
+
+        [WebMethod]
+        public XmlElement GetMillionData()
+        {
+            SqlConnection con = new SqlConnection(cnStr);
+            con.Open();
+            string query = "select * from [AssignmentDB].[dbo].[tblOrder]";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.ExecuteNonQuery();
+            SqlDataAdapter da = new SqlDataAdapter(cmd);
+            DataSet ds = new DataSet();
+            da.Fill(ds);
+            con.Close();
+            XmlDataDocument xmldata = new XmlDataDocument(ds);
+            XmlElement xmlElement = xmldata.DocumentElement;
+            return xmlElement;
+        }
+
+        [WebMethod]
+        public DataSet GetEmployees()
+        {
+            SqlConnection con = new SqlConnection(cnStr);
+
+            SqlCommand cmd = new SqlCommand(
+                "SELECT Employeeld,FirstName,Gender,Salary,Country FROM tblEmployee",
+                con);
+
+            SqlDataAdapter da = new SqlDataAdapter(cmd);
+
+            DataSet ds = new DataSet();
+
+            da.Fill(ds);
+
+            return ds;
+        }
+
+        [WebMethod]
+
+        //Insert Employeee
+        public int InsertEmployee
+            (
+                string FirstName,
+                string Gender,
+                int Salary,
+                string Country
+            )
+                    {
+                        SqlConnection con = new SqlConnection(cnStr);
+
+                        string query =
+                        @"INSERT INTO tblEmployee
+                  (FirstName,Gender,Salary,Country)
+                  VALUES
+                  (@FirstName,@Gender,@Salary,@Country)";
+
+                        SqlCommand cmd = new SqlCommand(query, con);
+
+                        cmd.Parameters.AddWithValue("@FirstName", FirstName);
+                        cmd.Parameters.AddWithValue("@Gender", Gender);
+                        cmd.Parameters.AddWithValue("@Salary", Salary);
+                        cmd.Parameters.AddWithValue("@Country", Country);
+
+                        con.Open();
+
+                        int rows = cmd.ExecuteNonQuery();
+
+                        con.Close();
+
+                        return rows;
+        }
+
+        [WebMethod]
+        //updating employees
+        public int UpdateEmployee(
+            int EmployeeId,
+            string FirstName,
+            string Gender,
+            int Salary,
+            string Country
+        )
+                {
+                    SqlConnection con = new SqlConnection(cnStr);
+
+                    string query =
+                    @"UPDATE tblEmployee
+              SET FirstName=@FirstName,
+                  Gender=@Gender,
+                  Salary=@Salary,
+                  Country=@Country
+              WHERE Employeeld=@EmployeeId";
+
+                    SqlCommand cmd = new SqlCommand(query, con);
+
+                    cmd.Parameters.AddWithValue("@EmployeeId", EmployeeId);
+                    cmd.Parameters.AddWithValue("@FirstName", FirstName);
+                    cmd.Parameters.AddWithValue("@Gender", Gender);
+                    cmd.Parameters.AddWithValue("@Salary", Salary);
+                    cmd.Parameters.AddWithValue("@Country", Country);
+
+                    con.Open();
+
+                    int rows = cmd.ExecuteNonQuery();
+
+                    con.Close();
+
+                    return rows;
+                }
+
+        [WebMethod]
+        // Deleteing employees
+        public int DeleteEmployee(int EmployeeId)
+                {
+                    SqlConnection con = new SqlConnection(cnStr);
+
+                    SqlCommand cmd =
+                        new SqlCommand(
+                            "DELETE FROM tblEmployee WHERE Employeeld=@EmployeeId",
+                            con);
+
+                    cmd.Parameters.AddWithValue("@EmployeeId", EmployeeId);
+
+                    con.Open();
+
+                    int rows = cmd.ExecuteNonQuery();
+
+                    con.Close();
+
+                    return rows;
         }
 
     }

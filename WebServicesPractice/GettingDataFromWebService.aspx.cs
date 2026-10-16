@@ -14,8 +14,8 @@ namespace WebServicesPractice
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            
-        }    
+
+        }
 
         public void LoadUsers(string st)
         {
@@ -35,6 +35,29 @@ namespace WebServicesPractice
                 gvUserDetails.DataBind();
             }
         }
+
+
+
+        //public void LoadUsers(string st)
+        //{
+        //    ServiceReferenceDemo2.WebServiceSoapClient objUserDetails = new ServiceReferenceDemo2.WebServiceSoapClient();
+        //    DataSet dsresult = new DataSet();
+        //    XElement exelement = objUserDetails.GetUserDetails(st);
+        //    if (exelement != null)
+        //    {
+        //        using (XmlReader nodereader = exelement.CreateReader())
+        //        {
+        //            dsresult.ReadXml(nodereader, XmlReadMode.Auto);
+        //        }
+        //        gvUserDetails.DataSource = dsresult;
+        //        gvUserDetails.DataBind();
+        //    }
+        //    else
+        //    {
+        //        gvUserDetails.DataSource = null;
+        //        gvUserDetails.DataBind();
+        //    }
+        //}
 
         protected void btnSubmit_Click(object sender, EventArgs e)
         {
