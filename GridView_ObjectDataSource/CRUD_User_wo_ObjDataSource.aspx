@@ -112,9 +112,8 @@
         ShowFooter="True"
         DataKeyNames="EmployeeId"        
            OnRowCommand="GridView1_RowCommand"
-           AllowPaging="true"
-           OnPageIndexChanging="gvUsers_pageIndexChanging"
-           PageSize="20">
+           AllowPaging="true"           
+           PageSize="10">
 
            
         <Columns>
@@ -288,24 +287,37 @@
     </asp:TemplateField>
 
             <asp:TemplateField>
- <ItemTemplate>
- <asp:LinkButton ID="lbEdit" CommandArgument='<%# Eval("EmployeeId") %>' CommandName="EditRow"
- ForeColor="#8C4510" runat="server">Edit</asp:LinkButton>
- <asp:LinkButton ID="lbDelete" CommandArgument='<%# Eval("EmployeeId") %>' CommandName="DeleteRow"
- ForeColor="#8C4510" runat="server" CausesValidation="false" onClientClick="return confirm('Deleted Employee Successfully');">Delete</asp:LinkButton>
- </ItemTemplate>
- <EditItemTemplate>
- <asp:LinkButton ID="lbUpdate" CommandArgument='<%# Eval("EmployeeId") %>' CommandName="UpdateRow"
- ForeColor="#8C4510" runat="server" onClientClick="return confirm('Updated Employee Successfully');">Update</asp:LinkButton>
- <asp:LinkButton ID="lbCancel" CommandArgument='<%# Eval("EmployeeId") %>' CommandName="CancelUpdate"
- ForeColor="#8C4510" runat="server" CausesValidation="false">Cancel</asp:LinkButton>
- </EditItemTemplate>
- </asp:TemplateField>
+             <ItemTemplate>
+             <asp:LinkButton ID="lbEdit" CommandArgument='<%# Eval("EmployeeId") %>' CommandName="EditRow"
+             ForeColor="#8C4510" runat="server">Edit</asp:LinkButton>
+             <asp:LinkButton ID="lbDelete" CommandArgument='<%# Eval("EmployeeId") %>' CommandName="DeleteRow"
+             ForeColor="#8C4510" runat="server" CausesValidation="false" onClientClick="return confirm('Deleted Employee Successfully');">Delete</asp:LinkButton>
+             </ItemTemplate>
+             <EditItemTemplate>
+             <asp:LinkButton ID="lbUpdate" CommandArgument='<%# Eval("EmployeeId") %>' CommandName="UpdateRow"
+             ForeColor="#8C4510" runat="server" onClientClick="return confirm('Updated Employee Successfully');">Update</asp:LinkButton>
+             <asp:LinkButton ID="lbCancel" CommandArgument='<%# Eval("EmployeeId") %>' CommandName="CancelUpdate"
+             ForeColor="#8C4510" runat="server" CausesValidation="false">Cancel</asp:LinkButton>
+             </EditItemTemplate>
+             </asp:TemplateField>
 
-</Columns>
+        </Columns>
 
 
-        </asp:GridView>
+    </asp:GridView>
+
+
+            <asp:Repeater ID="repeaterPaging" runat="server">
+                <ItemTemplate>
+                <asp:LinkButton ID="pagingLinkButton" 
+                 runat="server" 
+                    Text='<%#Eval("Text") %>'
+                    CommandArgument ='<%# Eval("Value") %>' 
+                    Enabled='<%# Eval("Enabled") %>' 
+                    OnClick="linkButton_Click">
+                </asp:LinkButton>
+                </ItemTemplate>
+            </asp:Repeater>
 
 
         <div class="footer-text">

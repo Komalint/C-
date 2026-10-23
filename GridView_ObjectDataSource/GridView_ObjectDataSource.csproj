@@ -121,6 +121,8 @@
     <Content Include="CRUD_User.aspx" />
     <Content Include="CRUD_User_wo_ObjDataSource.aspx" />
     <Content Include="Default.aspx" />
+    <Content Include="EmployeeFullDrtails.aspx" />
+    <Content Include="EmployeeListFormerDetails.aspx" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Scripts\bootstrap.bundle.js" />
@@ -221,6 +223,20 @@
     </Compile>
     <Compile Include="Default.aspx.designer.cs">
       <DependentUpon>Default.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="EmployeeFullDrtails.aspx.cs">
+      <DependentUpon>EmployeeFullDrtails.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="EmployeeFullDrtails.aspx.designer.cs">
+      <DependentUpon>EmployeeFullDrtails.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="EmployeeListFormerDetails.aspx.cs">
+      <DependentUpon>EmployeeListFormerDetails.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="EmployeeListFormerDetails.aspx.designer.cs">
+      <DependentUpon>EmployeeListFormerDetails.aspx</DependentUpon>
     </Compile>
     <Compile Include="EmployeeQuery.cs" />
     <Compile Include="Global.asax.cs">

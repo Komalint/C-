@@ -13,10 +13,48 @@ namespace GridView_ObjectDataSource
         {
             if (!IsPostBack)
             {
-                BindGridViewData();
+                BindGridViewDataa();
+                //BindGridViewData();
             }
         }
-        private void BindGridViewData()
+        protected void BindGridViewDataa()
+        {
+            int totalRows = 0;
+            GridView1.DataSource = UserDataAccessLayer.GetAllUsers(0, GridView1.PageSize, out totalRows);
+            GridView1.DataBind();
+            DatabindRepeater(0, GridView1.PageSize, totalRows);
+
+        }
+        private void DatabindRepeater(int pageIndex, int pageSize, int totalRows)
+        {
+            int totalPages = totalRows / pageSize;
+            if ((totalRows % pageSize) != 0)
+            {
+                totalPages += 1;
+            }
+            List<ListItem> pages = new List<ListItem>();
+            if (totalPages > 1)
+            {
+                for (int i = 1; i <= totalPages; i++)
+                {
+                    pages.Add(new ListItem(i.ToString(), i.ToString(), i != (pageIndex + 1)));
+                }
+            }
+            repeaterPaging.DataSource = pages;
+            repeaterPaging.DataBind();
+        }
+        protected void linkButton_Click(object sender, EventArgs e)
+        {
+            int totalRows = 0;
+            int pageIndex = int.Parse((sender as LinkButton).CommandArgument);
+            pageIndex -= 1;
+            GridView1.PageIndex = pageIndex;
+            GridView1.DataSource = UserDataAccessLayer.GetAllUsers(pageIndex, GridView1.PageSize, out totalRows);
+            GridView1.DataBind();
+            DatabindRepeater(pageIndex, GridView1.PageSize, totalRows);
+        }
+
+        protected void BindGridViewData()
         {
             GridView1.DataSource = UserDataAccessLayer.GetAllUsers();
             GridView1.DataBind();
@@ -28,7 +66,8 @@ namespace GridView_ObjectDataSource
             {
                 int rowindex = ((GridViewRow)((LinkButton)e.CommandSource).NamingContainer).RowIndex;
                 GridView1.EditIndex = rowindex;
-                BindGridViewData();        
+                BindGridViewDataa();
+                //BindGridViewData();        
             }
             else if (e.CommandName == "DeleteRow")
             {
@@ -44,13 +83,15 @@ namespace GridView_ObjectDataSource
                 emp.EmployeeId =
                     Convert.ToInt32(e.CommandArgument);
                 UserDataAccessLayer.DeleteUserById(emp);
-                BindGridViewData();
+                BindGridViewDataa();
+                //BindGridViewData();
 
             }
             else if (e.CommandName == "CancelUpdate")
             {
                 GridView1.EditIndex = -1;
-                BindGridViewData();
+                BindGridViewDataa();
+                //BindGridViewData();
             }
             else if (e.CommandName == "UpdateRow")
             {
@@ -95,7 +136,8 @@ namespace GridView_ObjectDataSource
                 UserDataAccessLayer.UpdateEmployee(emp);
                 GridView1.EditIndex = -1;
 
-                BindGridViewData();
+                BindGridViewDataa();
+                //BindGridViewData();
             }
             else if (e.CommandName == "Addnew")
             {
@@ -133,7 +175,8 @@ namespace GridView_ObjectDataSource
 
                 UserDataAccessLayer.InsertEmployee(emp);
 
-                BindGridViewData();
+                BindGridViewDataa();
+                //BindGridViewData();
             }
 
         }
