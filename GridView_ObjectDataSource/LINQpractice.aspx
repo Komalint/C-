@@ -103,16 +103,16 @@
    
 
            <asp:GridView
-            ID="GridView1"
-            runat="server"
-            AutoGenerateColumns="False"
-            CssClass="grid"
-            ShowFooter="True"
-            DataKeyNames="EmployeeId"        
-               OnRowCommand="GridView1_RowCommand"
-               OnPageIndexChanging="GridView1_PageIndexChanging"
-               AllowPaging="true"           
-               PageSize="10">
+                ID="GridView1"
+                runat="server"
+                AutoGenerateColumns="False"
+                CssClass="grid"
+                ShowFooter="True"
+                DataKeyNames="EmployeeId"        
+                OnRowCommand="GridView1_RowCommand"
+                OnPageIndexChanging="GridView1_PageIndexChanging"
+                AllowPaging="true"           
+                PageSize="10">
 
        
             <Columns>
@@ -286,19 +286,22 @@
                 </asp:TemplateField>
 
                         <asp:TemplateField>
+
                          <ItemTemplate>
                          <asp:LinkButton ID="lbEdit" CommandArgument='<%# Eval("EmployeeId") %>' CommandName="EditRow"
                          ForeColor="#8C4510" runat="server">Edit</asp:LinkButton>
                          <asp:LinkButton ID="lbDelete" CommandArgument='<%# Eval("EmployeeId") %>' CommandName="DeleteRow"
                          ForeColor="#8C4510" runat="server" CausesValidation="false" onClientClick="return confirm('Deleted Employee Successfully');">Delete</asp:LinkButton>
                          </ItemTemplate>
+
                          <EditItemTemplate>
                          <asp:LinkButton ID="lbUpdate" CommandArgument='<%# Eval("EmployeeId") %>' CommandName="UpdateRow"
                          ForeColor="#8C4510" runat="server" onClientClick="return confirm('Updated Employee Successfully');">Update</asp:LinkButton>
                          <asp:LinkButton ID="lbCancel" CommandArgument='<%# Eval("EmployeeId") %>' CommandName="CancelUpdate"
                          ForeColor="#8C4510" runat="server" CausesValidation="false">Cancel</asp:LinkButton>
                          </EditItemTemplate>
-                         </asp:TemplateField>
+
+                 </asp:TemplateField>
 
                     </Columns>
 

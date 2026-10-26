@@ -101,7 +101,7 @@ namespace GridView_ObjectDataSource
         }
 
 
-        //Delete Employee
+        //Delete Employee using employee object 
         public static void DeleteUserById(EmployeeQuery emp)
         {
             using (SqlConnection con = new SqlConnection(_conStr))
@@ -118,7 +118,7 @@ namespace GridView_ObjectDataSource
             }
         }
 
-
+        //Delete Employee using a parameter of data type as int
         public static void DeleteUserByIdn(int id)
         {
             using (SqlConnection con = new SqlConnection(_conStr))
@@ -272,15 +272,13 @@ namespace GridView_ObjectDataSource
 
 
         public static List<EmployeeQuery> GetAllEmployees(
-    int pageIndex,
-    int pageSize,
-    out int totalRows)
+            int pageIndex,
+            int pageSize,
+            out int totalRows)
         {
-            List<EmployeeQuery> employeeQueries =
-                new List<EmployeeQuery>();
+            List<EmployeeQuery> employeeQueries = new List<EmployeeQuery>();
 
-            using (SqlConnection con =
-                new SqlConnection(_conStr))
+            using (SqlConnection con = new SqlConnection(_conStr))
             {
                 SqlCommand cmd =
                     new SqlCommand(
