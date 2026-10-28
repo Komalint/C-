@@ -1,0 +1,123 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<main>
+    <section class="jumbotron text-center">
+        <h1 id="title">Orders Management System</h1>
+
+        <p class="lead">
+            Manage customer orders, track store-wise sales, update order details,
+            and maintain delivery information from a single dashboard.
+        </p>
+
+        <p>
+            @Html.ActionLink(
+                "View Orders",
+                "OrderList",
+                "Orders",
+                null,
+                new { @class = "btn btn-primary btn-lg" }
+            )
+        </p>
+    </section>
+
+    <div class="row">
+
+        <section class="col-md-4">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3>Order Management</h3>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        Create, update, view, and delete customer orders.
+                        Manage product information, quantities, and payment details.
+                    </p>
+                    <p>
+                        @Html.ActionLink(
+                            "Manage Orders",
+                            "OrderList",
+                            "Orders",
+                            null,
+                            new { @class = "btn btn-default" }
+                        )
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="col-md-4">
+            <div class="panel panel-success">
+                <div class="panel-heading">
+                    <h3>Store Tracking</h3>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        Search and view orders by Store Id.
+                        Monitor store performance and order activity.
+                    </p>
+                    <p>
+                        @Html.ActionLink(
+                            "View Stores",
+                            "OrderList",
+                            "Orders",
+                            null,
+                            new { @class = "btn btn-success" }
+                        )
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="col-md-4">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3>Customer Deliveries</h3>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        Track customer delivery locations,
+                        payment methods, and order fulfillment details.
+                    </p>
+                    <p>
+                        @Html.ActionLink(
+                            "Explore Orders",
+                            "OrderList",
+                            "Orders",
+                            null,
+                            new { @class = "btn btn-info" }
+                        )
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <hr />
+
+    <div class="row text-center">
+
+        <div class="col-md-3">
+            <h3>50+</h3>
+            <p>Orders</p>
+        </div>
+
+        <div class="col-md-3">
+            <h3>8</h3>
+            <p>Stores</p>
+        </div>
+
+        <div class="col-md-3">
+            <h3>100%</h3>
+            <p>CRUD Operations</p>
+        </div>
+
+        <div class="col-md-3">
+            <h3>MVC</h3>
+            <p>ASP.NET Framework</p>
+        </div>
+
+    </div>
+</main>
