@@ -1,0 +1,133 @@
+@model UserAuthMVC.Models.RegisterViewModel
+
+@{
+    ViewBag.Title = "User Registration";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-12 col-md-10 col-lg-7">
+        <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-header bg-gradient bg-primary text-white text-center py-4 rounded-top-4">
+                <div class="mb-2">
+                    <i class="bi bi-person-plus-fill display-4"></i>
+                </div>
+                <h3 class="fw-bold mb-1">Create New Account</h3>
+                <p class="text-white-50 small mb-0">Fill in your information to register a new user</p>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { @class = "needs-validation", role = "form" }))
+                {
+                    @Html.AntiForgeryToken()
+
+                    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger py-2 small" })
+
+                    <div class="row g-3">
+                        <!-- Full Name / Username -->
+                        <div class="col-md-6">
+                            @Html.LabelFor(m => m.UserName, new { @class = "form-label fw-semibold" })
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-person"></i></span>
+                                @Html.TextBoxFor(m => m.UserName, new { @class = "form-control", placeholder = "e.g. Komal Gupta" })
+                            </div>
+                            @Html.ValidationMessageFor(m => m.UserName, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <!-- Email -->
+                        <div class="col-md-6">
+                            @Html.LabelFor(m => m.Email, new { @class = "form-label fw-semibold" })
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-envelope"></i></span>
+                                @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "e.g. komal@gmail.com", type = "email" })
+                            </div>
+                            @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <!-- Password -->
+                        <div class="col-md-6">
+                            @Html.LabelFor(m => m.Password, new { @class = "form-label fw-semibold" })
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-lock"></i></span>
+                                @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "At least 6 characters" })
+                            </div>
+                            @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="col-md-6">
+                            @Html.LabelFor(m => m.ConfirmPassword, new { @class = "form-label fw-semibold" })
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-shield-check"></i></span>
+                                @Html.PasswordFor(m => m.ConfirmPassword, new { @class = "form-control", placeholder = "Re-enter password" })
+                            </div>
+                            @Html.ValidationMessageFor(m => m.ConfirmPassword, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <!-- Phone Number -->
+                        <div class="col-md-6">
+                            @Html.LabelFor(m => m.PhoneNumber, new { @class = "form-label fw-semibold" })
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-telephone"></i></span>
+                                @Html.TextBoxFor(m => m.PhoneNumber, new { @class = "form-control", placeholder = "e.g. 9876543210" })
+                            </div>
+                            @Html.ValidationMessageFor(m => m.PhoneNumber, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <!-- Gender -->
+                        <div class="col-md-6">
+                            @Html.LabelFor(m => m.Gender, new { @class = "form-label fw-semibold" })
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-gender-ambiguous"></i></span>
+                                @Html.DropDownListFor(m => m.Gender, new List<SelectListItem>
+                                {
+                                    new SelectListItem { Text = "-- Select Gender --", Value = "" },
+                                    new SelectListItem { Text = "Female", Value = "Female" },
+                                    new SelectListItem { Text = "Male", Value = "Male" },
+                                    new SelectListItem { Text = "Other", Value = "Other" }
+                                }, new { @class = "form-select" })
+                            </div>
+                            @Html.ValidationMessageFor(m => m.Gender, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <!-- City -->
+                        <div class="col-md-6">
+                            @Html.LabelFor(m => m.City, new { @class = "form-label fw-semibold" })
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-geo-alt"></i></span>
+                                @Html.TextBoxFor(m => m.City, new { @class = "form-control", placeholder = "e.g. Delhi" })
+                            </div>
+                            @Html.ValidationMessageFor(m => m.City, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <!-- State -->
+                        <div class="col-md-6">
+                            @Html.LabelFor(m => m.State, new { @class = "form-label fw-semibold" })
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-pin-map"></i></span>
+                                @Html.TextBoxFor(m => m.State, new { @class = "form-control", placeholder = "e.g. Delhi" })
+                            </div>
+                            @Html.ValidationMessageFor(m => m.State, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg shadow-sm fw-semibold">
+                            <i class="bi bi-person-check-fill me-1"></i> Complete Registration
+                        </button>
+                    </div>
+                }
+
+                <div class="text-center mt-4">
+                    <p class="text-muted small mb-0">
+                        Already have an account?
+                        <a href="@Url.Action("Login", "Account")" class="fw-bold text-decoration-none">Sign In here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

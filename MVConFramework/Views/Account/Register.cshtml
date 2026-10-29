@@ -1,0 +1,116 @@
+@model MVConFramework.ViewModels.RegisterViewModel
+
+@{
+    ViewBag.Title = "Register";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+
+        <div class="col-md-6">
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Register</h4>
+                </div>
+
+                <div class="card-body">
+
+                    @using (Html.BeginForm("Register", "Account", FormMethod.Post))
+                    {
+                        @Html.AntiForgeryToken()
+
+                        @Html.ValidationSummary(true, "", new { @class = "text-danger mb-3" })
+
+                        <div class="mb-3">
+                            @Html.LabelFor(m => m.UserName)
+                            @Html.TextBoxFor(m => m.UserName,
+                                new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.UserName, "",
+                                new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            @Html.LabelFor(m => m.Email)
+                            @Html.TextBoxFor(m => m.Email,
+                                new { @class = "form-control", type = "email" })
+                            @Html.ValidationMessageFor(m => m.Email, "",
+                                new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            @Html.LabelFor(m => m.Password)
+                            @Html.PasswordFor(m => m.Password,
+                                new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.Password, "",
+                                new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            @Html.LabelFor(m => m.ConfirmPassword)
+                            @Html.PasswordFor(m => m.ConfirmPassword,
+                                new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.ConfirmPassword, "",
+                                new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            @Html.LabelFor(m => m.PhoneNumber)
+                            @Html.TextBoxFor(m => m.PhoneNumber,
+                                new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.PhoneNumber, "",
+                                new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            @Html.LabelFor(m => m.Gender)
+                            @Html.DropDownListFor(m => m.Gender,
+                                new List<SelectListItem>
+                                {
+                                    new SelectListItem { Text = "-- Select Gender --", Value = "" },
+                                    new SelectListItem { Text = "Female", Value = "Female" },
+                                    new SelectListItem { Text = "Male", Value = "Male" },
+                                    new SelectListItem { Text = "Other", Value = "Other" }
+                                },
+                                new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.Gender, "",
+                                new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            @Html.LabelFor(m => m.City)
+                            @Html.TextBoxFor(m => m.City,
+                                new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.City, "",
+                                new { @class = "text-danger" })
+                        </div>
+
+                        <div class="mb-3">
+                            @Html.LabelFor(m => m.State)
+                            @Html.TextBoxFor(m => m.State,
+                                new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.State, "",
+                                new { @class = "text-danger" })
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100">
+                            Register
+                        </button>
+                    }
+
+                </div>
+
+                <div class="card-footer text-center">
+                    Already have an account?
+                    @Html.ActionLink("Login", "Login", "Account")
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+@section Scripts{
+    @Scripts.Render("~/bundles/jqueryval")
+}

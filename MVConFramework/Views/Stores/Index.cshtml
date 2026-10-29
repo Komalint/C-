@@ -1,0 +1,87 @@
+﻿@model IEnumerable<MVConFramework.Models.Stores>
+
+@{
+    ViewBag.Title = "Stores";
+}
+
+<p>
+    @Html.ActionLink(
+        "➕ Add New Store",
+        "Create",
+        null,
+        new { @class = "btn btn-primary" })
+</p>
+<div class="container mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">🏪 Stores List</h3>
+        </div>
+
+        <div class="card-body">
+
+            <table class="table table-hover table-bordered">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th>Store Id</th>
+                        <th>Store Name</th>
+                        <th>Owner</th>
+                        <th>Type</th>
+                        <th>City</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var store in Model)
+                    {
+                        <tr>
+                            <td>@store.StoreId</td>
+                            <td>@store.StoreName</td>
+                            <td>@store.OwnerName</td>
+                            <td>@store.StoreType</td>
+                            <td>@store.City</td>
+
+                            <td>
+
+                                @Html.ActionLink(
+                                    "View Orders",
+                                    "StoreOrders",
+                                    "StoreOrder",
+                                    new { id = store.StoreId },
+                                    new { @class = "btn btn-success btn-sm" })
+
+                                @Html.ActionLink(
+                                    "Edit",
+                                    "Edit",
+                                    new { id = store.StoreId },
+                                    new { @class = "btn btn-warning btn-sm" })
+
+                                @Html.ActionLink(
+                                    "Details",
+                                    "Details",
+                                    new { id = store.StoreId },
+                                    new { @class = "btn btn-info btn-sm" })
+
+                                @Html.ActionLink(
+                                    "Delete",
+                                    "Delete",
+                                    new { id = store.StoreId },
+                                    new { @class = "btn btn-danger btn-sm" })
+
+                            </td>
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>

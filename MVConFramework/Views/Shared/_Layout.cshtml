@@ -1,39 +1,137 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewBag.Title - My ASP.NET Application</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title - Store & Order Management</title>
+
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
 </head>
-<body>
-    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
         <div class="container">
-            @Html.ActionLink("Application name", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
-            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Toggle navigation" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
+
+            @if (Session["UserId"] != null)
+            {
+                @Html.ActionLink(
+                    "Store & Order Management",
+                    "Index",
+                    "Dashboard",
+                    null,
+                    new { @class = "navbar-brand fw-bold" })
+            }
+            else
+            {
+                @Html.ActionLink(
+                    "Store & Order Management",
+                    "Login",
+                    "Account",
+                    null,
+                    new { @class = "navbar-brand fw-bold" })
+            }
+
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#mainNavbar">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between">
-                <ul class="navbar-nav flex-grow-1">
-                    <li>@Html.ActionLink("Home", "OrderList", "Orders", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("About", "About", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("Contact", "Contact", "Home", new { area = "" }, new { @class = "nav-link" })</li>
+
+            <div class="collapse navbar-collapse" id="mainNavbar">
+
+                <ul class="navbar-nav me-auto">
+
+                    @if (Session["UserId"] != null)
+                    {
+                        <li class="nav-item">
+                            @Html.ActionLink("Dashboard", "Index", "Dashboard", null,
+                                new { @class = "nav-link" })
+                        </li>
+
+                        <li class="nav-item">
+                            @Html.ActionLink("Stores", "Index", "Stores", null,
+                                new { @class = "nav-link" })
+                        </li>
+
+                        <li class="nav-item">
+                            @Html.ActionLink("Orders", "OrderList", "Orders", null,
+                                new { @class = "nav-link" })
+                        </li>
+                    }
+
                 </ul>
+
+                <ul class="navbar-nav ms-auto">
+
+                    @if (Session["UserId"] != null)
+                    {
+                        <li class="nav-item">
+                            <span class="nav-link text-white">
+                                Welcome, <strong>@Session["UserName"]</strong>
+                            </span>
+                        </li>
+
+                        <li class="nav-item">
+                            @Html.ActionLink(
+                                "Logout",
+                                "Logout",
+                                "Account",
+                                null,
+                                new { @class = "btn btn-outline-light btn-sm mt-1 ms-2" })
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            @Html.ActionLink(
+                                "Login",
+                                "Login",
+                                "Account",
+                                null,
+                                new { @class = "nav-link" })
+                        </li>
+
+                        <li class="nav-item">
+                            @Html.ActionLink(
+                                "Register",
+                                "Register",
+                                "Account",
+                                null,
+                                new { @class = "btn btn-light btn-sm mt-1 ms-2" })
+                        </li>
+                    }
+
+                </ul>
+
             </div>
         </div>
     </nav>
-    <div class="container body-content">
+
+    <div class="container mt-4">
+
         @RenderBody()
-        <hr />
-        <footer>
-            <p>&copy; @DateTime.Now.Year - My ASP.NET Application</p>
-        </footer>
+
     </div>
+
+    <footer class="bg-white border-top mt-5 py-3">
+        <div class="container text-center text-muted">
+            © @DateTime.Now.Year Store & Order Management System
+        </div>
+    </footer>
 
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
+
+    <script>
+        setTimeout(function () {
+            $(".alert").fadeOut("slow");
+        }, 3000);
+    </script>
+
     @RenderSection("scripts", required: false)
+
 </body>
 </html>

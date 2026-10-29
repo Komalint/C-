@@ -1,4 +1,4 @@
-﻿/* Set padding to keep content from hitting the edges */
+/* Set padding to keep content from hitting the edges */
 .body-content {
     margin-top: 15px;
     padding-left: 15px;
@@ -12,9 +12,19 @@
     white-space: normal;
 }
 
-/* Set width on the form input elements since they're 100% wide by default */
-input,
-select,
-textarea {
+/* Allow modern Bootstrap form controls to fill their container width properly */
+.form-control,
+.form-select,
+.input-group input,
+.card input,
+.card select,
+.card textarea {
+    max-width: 100% !important;
+}
+
+/* Fallback default max-width for bare inputs outside cards */
+input:not(.form-control):not([type="checkbox"]):not([type="radio"]),
+select:not(.form-select),
+textarea:not(.form-control) {
     max-width: 280px;
 }

@@ -1,0 +1,180 @@
+﻿@model MVConFramework.ViewModels.StoreOrderViewModel
+
+@{
+    ViewBag.Title = "Store Orders";
+}
+
+<div class="container mt-4">
+
+    <!-- Store Details Card -->
+    <div class="card shadow mb-4">
+
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">
+                🏪 Store Details
+            </h3>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <label><b>Store ID</b></label>
+                    <p>@Model.Store.StoreId</p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label><b>Store Name</b></label>
+                    <p>@Model.Store.StoreName</p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label><b>Owner Name</b></label>
+                    <p>@Model.Store.OwnerName</p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label><b>Store Type</b></label>
+                    <p>@Model.Store.StoreType</p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label><b>City</b></label>
+                    <p>@Model.Store.City</p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label><b>State</b></label>
+                    <p>@Model.Store.State</p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label><b>Contact Number</b></label>
+                    <p>@Model.Store.ContactNumber</p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label><b>Email</b></label>
+                    <p>@Model.Store.Email</p>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label><b>Opening Date</b></label>
+                    <p>@Model.Store.OpeningDate.ToShortDateString()</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Orders Card -->
+    <div class="card shadow">
+
+        <div class="card-header bg-success text-white">
+            <h3 class="mb-0">
+                📦 Orders for @Model.Store.StoreName
+            </h3>
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.Orders != null && Model.Orders.Count > 0)
+            {
+                <table class="table table-bordered table-hover">
+
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Order Id</th>
+                            <th>Customer Name</th>
+                            <th>Product Name</th>
+                            <th>Order Date</th>
+                            <th>Quantity</th>
+                            <th>Total Amount</th>
+                            <th>Payment Method</th>
+                            <th>Delivery City</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var item in Model.Orders)
+                        {
+                            <tr>
+                                <td>@item.OrderId</td>
+                                <td>@item.CustomerName</td>
+                                <td>@item.ProductName</td>
+                                <td>@item.OrderDate.ToShortDateString()</td>
+
+                                <td>
+                                    <span class="badge bg-info text-dark">
+                                        @item.Quantity
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="text-success fw-bold">
+                                        ₹@item.TotalAmount
+                                    </span>
+                                </td>
+
+                                <td>@item.PaymentMethod</td>
+                                <td>@item.DeliveryCity</td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    No Orders Found For This Store.
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+    <div class="mt-3">
+        @Html.ActionLink(
+            "← Back To Stores",
+            "Index",
+            "Stores",
+            null,
+            new { @class = "btn btn-secondary" }
+        )
+    </div>
+
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 12px;
+    }
+
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+    }
+
+    .card-body label {
+        color: #6c757d;
+        margin-bottom: 0;
+    }
+
+    .card-body p {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+</style>

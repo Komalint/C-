@@ -1,0 +1,194 @@
+@model UserAuthMVC.Models.UserModel
+
+@{
+    ViewBag.Title = "User Dashboard";
+}
+
+<div class="container-fluid py-3">
+    <!-- Header Banner -->
+    <div class="p-4 p-md-5 mb-4 rounded-4 text-white bg-primary shadow-sm position-relative overflow-hidden">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="avatar bg-white text-primary rounded-circle d-flex align-items-center justify-content-center me-3 shadow" style="width: 64px; height: 64px; font-size: 28px; font-weight: bold;">
+                        @(string.IsNullOrEmpty(Model.UserName) ? "U" : Model.UserName.Substring(0, 1).ToUpper())
+                    </div>
+                    <div>
+                        <h2 class="fw-bold mb-0">Hello, @Model.UserName!</h2>
+                        <span class="badge bg-warning text-dark px-3 py-1 mt-1 rounded-pill fw-semibold">
+                            <i class="bi bi-shield-check"></i> @Model.Role Account
+                        </span>
+                    </div>
+                </div>
+                <p class="lead mb-0 text-white-50">
+                    Welcome to your personal account dashboard. You have successfully authenticated and redirected.
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="@Url.Action("EditProfile", "Dashboard")" class="btn btn-light btn-lg px-4 shadow-sm fw-semibold me-2">
+                    <i class="bi bi-pencil-square"></i> Edit Profile
+                </a>
+                <a href="@Url.Action("Logout", "Account")" class="btn btn-outline-light btn-lg px-4">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-3 bg-primary bg-opacity-10 text-primary p-3 me-3">
+                        <i class="bi bi-person-badge fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">User ID</div>
+                        <div class="fs-4 fw-bold text-dark">#@Model.UserId</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-3 bg-success bg-opacity-10 text-success p-3 me-3">
+                        <i class="bi bi-check-circle-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Account Status</div>
+                        <div class="fs-4 fw-bold text-success">@(Model.IsActive ? "Active" : "Inactive")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-3 bg-info bg-opacity-10 text-info p-3 me-3">
+                        <i class="bi bi-shield-lock-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Role / Access</div>
+                        <div class="fs-4 fw-bold text-dark">@Model.Role</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-3">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-3 bg-warning bg-opacity-10 text-warning p-3 me-3">
+                        <i class="bi bi-calendar-check fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Registered On</div>
+                        <div class="fs-5 fw-bold text-dark">@Model.CreatedDate.ToString("dd MMM yyyy")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row g-4">
+        <!-- User Details Card -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-person-lines-fill text-primary me-2"></i>User Profile Details</h5>
+                    <a href="@Url.Action("EditProfile", "Dashboard")" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                        <i class="bi bi-pencil me-1"></i> Update
+                    </a>
+                </div>
+                <div class="card-body pt-0">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <span class="text-muted"><i class="bi bi-person me-2"></i>Full Name:</span>
+                            <span class="fw-semibold text-dark">@Model.UserName</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <span class="text-muted"><i class="bi bi-envelope me-2"></i>Email Address:</span>
+                            <span class="fw-semibold text-dark">@Model.Email</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <span class="text-muted"><i class="bi bi-telephone me-2"></i>Phone Number:</span>
+                            <span class="fw-semibold text-dark">@(string.IsNullOrEmpty(Model.PhoneNumber) ? "Not provided" : Model.PhoneNumber)</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <span class="text-muted"><i class="bi bi-gender-ambiguous me-2"></i>Gender:</span>
+                            <span class="fw-semibold text-dark">@(string.IsNullOrEmpty(Model.Gender) ? "Not specified" : Model.Gender)</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <span class="text-muted"><i class="bi bi-geo-alt me-2"></i>City:</span>
+                            <span class="fw-semibold text-dark">@(string.IsNullOrEmpty(Model.City) ? "Not specified" : Model.City)</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <span class="text-muted"><i class="bi bi-pin-map me-2"></i>State:</span>
+                            <span class="fw-semibold text-dark">@(string.IsNullOrEmpty(Model.State) ? "Not specified" : Model.State)</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <span class="text-muted"><i class="bi bi-clock-history me-2"></i>Created Date:</span>
+                            <span class="fw-semibold text-dark">@Model.CreatedDate.ToString("F")</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session & Quick Info Card -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-cpu text-success me-2"></i>Current Session Details</h5>
+                </div>
+                <div class="card-body pt-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Session Variable</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>Session["UserId"]</code></td>
+                                    <td><span class="badge bg-secondary">@Session["UserId"]</span></td>
+                                </tr>
+                                <tr>
+                                    <td><code>Session["UserName"]</code></td>
+                                    <td><strong>@Session["UserName"]</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><code>Session["Email"]</code></td>
+                                    <td>@Session["Email"]</td>
+                                </tr>
+                                <tr>
+                                    <td><code>Session["Role"]</code></td>
+                                    <td><span class="badge bg-primary">@Session["Role"]</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-lightning-charge-fill text-warning me-2"></i>Quick Actions</h6>
+                <div class="d-grid gap-2">
+                    <a href="@Url.Action("EditProfile", "Dashboard")" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-person-gear me-2"></i> Edit Account Information
+                    </a>
+                    <a href="@Url.Action("Logout", "Account")" class="btn btn-outline-danger text-start">
+                        <i class="bi bi-box-arrow-right me-2"></i> Sign Out of Session
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,78 @@
+@model UserAuthMVC.Models.UserModel
+
+@{
+    ViewBag.Title = "Edit Profile";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-12 col-md-9 col-lg-7">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white border-0 py-4 text-center">
+                <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-pencil-square text-primary me-2"></i>Update Profile</h4>
+                <p class="text-muted small mb-0">Modify your personal details below</p>
+            </div>
+            <div class="card-body p-4 pt-0">
+                @using (Html.BeginForm("EditProfile", "Dashboard", FormMethod.Post, new { @class = "needs-validation", role = "form" }))
+                {
+                    @Html.AntiForgeryToken()
+
+                    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger py-2 small" })
+
+                    @Html.HiddenFor(m => m.UserId)
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-muted">Email Address (Read-only)</label>
+                        <input type="text" class="form-control bg-light" value="@Model.Email" readonly="readonly" />
+                        <div class="form-text">Email address cannot be changed.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        @Html.LabelFor(m => m.UserName, new { @class = "form-label fw-semibold" })
+                        @Html.TextBoxFor(m => m.UserName, new { @class = "form-control", required = "required" })
+                        @Html.ValidationMessageFor(m => m.UserName, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="mb-3">
+                        @Html.LabelFor(m => m.PhoneNumber, new { @class = "form-label fw-semibold" })
+                        @Html.TextBoxFor(m => m.PhoneNumber, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.PhoneNumber, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="mb-3">
+                        @Html.LabelFor(m => m.Gender, new { @class = "form-label fw-semibold" })
+                        @Html.DropDownListFor(m => m.Gender, new List<SelectListItem>
+                        {
+                            new SelectListItem { Text = "Female", Value = "Female", Selected = (Model.Gender == "Female") },
+                            new SelectListItem { Text = "Male", Value = "Male", Selected = (Model.Gender == "Male") },
+                            new SelectListItem { Text = "Other", Value = "Other", Selected = (Model.Gender == "Other") }
+                        }, new { @class = "form-select" })
+                        @Html.ValidationMessageFor(m => m.Gender, "", new { @class = "text-danger small" })
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            @Html.LabelFor(m => m.City, new { @class = "form-label fw-semibold" })
+                            @Html.TextBoxFor(m => m.City, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.City, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            @Html.LabelFor(m => m.State, new { @class = "form-label fw-semibold" })
+                            @Html.TextBoxFor(m => m.State, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.State, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="@Url.Action("Index", "Dashboard")" class="btn btn-outline-secondary px-4">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                            <i class="bi bi-save me-1"></i> Save Changes
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

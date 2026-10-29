@@ -1,0 +1,145 @@
+@model MVConFramework.ViewModels.DashboardViewModel
+
+@{
+    ViewBag.Title = "Dashboard";
+}
+
+<div class="container mt-4">
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3>Welcome, @Model.CurrentUserName</h3>
+            <p class="text-muted mb-0">
+                Role: @Model.CurrentUserRole
+            </p>
+
+            @if (!string.IsNullOrEmpty(Model.CurrentUserEmail))
+            {
+                <p class="text-muted">
+                    @Model.CurrentUserEmail
+                </p>
+            }
+        </div>
+    </div>
+
+    <div class="row mb-4">
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Total Stores</h5>
+                    <h2>@Model.TotalStores</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Total Orders</h5>
+                    <h2>@Model.TotalOrders</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Total Revenue</h5>
+                    <h2>₹@Model.TotalRevenue.ToString("N0")</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Total Users</h5>
+                    <h2>@Model.TotalUsers</h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="mb-4">
+        @Html.ActionLink("Orders", "OrderList", "Orders", null,
+            new { @class = "btn btn-primary me-2" })
+
+        @Html.ActionLink("Stores", "Index", "Stores", null,
+            new { @class = "btn btn-secondary me-2" })
+
+        @Html.ActionLink("Create Order", "Create", "Orders", null,
+            new { @class = "btn btn-success me-2" })
+
+        @Html.ActionLink("Logout", "Logout", "Account", null,
+            new { @class = "btn btn-danger" })
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Recent Orders</h5>
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.RecentOrders != null && Model.RecentOrders.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+
+                        <thead>
+                            <tr>
+                                <th>Order Id</th>
+                                <th>Store</th>
+                                <th>Customer</th>
+                                <th>Product</th>
+                                <th>Amount</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var order in Model.RecentOrders)
+                            {
+                                <tr>
+                                    <td>@order.OrderId</td>
+                                    <td>@order.StoreName</td>
+                                    <td>@order.CustomerName</td>
+                                    <td>@order.ProductName</td>
+                                    <td>₹@order.TotalAmount</td>
+                                    <td>
+                                        @Html.ActionLink(
+                                            "Details",
+                                            "OrderDetails",
+                                            "Orders",
+                                            new
+                                            {
+                                                id = order.OrderId,
+                                                storeId = order.StoreId
+                                            },
+                                            new { @class = "btn btn-sm btn-info" })
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">No Orders Found.</p>
+            }
+
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,98 @@
+﻿@model MVConFramework.Models.Stores
+
+@{
+    ViewBag.Title = "Details";
+}
+
+<h2>Details</h2>
+
+<div>
+    <h4>Stores</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.StoreId)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.StoreId)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.StoreName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.StoreName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.OwnerName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.OwnerName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.StoreType)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.StoreType)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.ContactNumber)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.ContactNumber)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Email)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Email)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.City)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.City)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.State)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.State)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.OpeningDate)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.OpeningDate)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.IsActive)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.IsActive)
+        </dd>
+
+    </dl>
+</div>
+<p>
+    @Html.ActionLink("Edit", "Edit", new { /* id = Model.PrimaryKey */ }) |
+    @Html.ActionLink("Back to List", "Index")
+</p>
