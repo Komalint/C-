@@ -1,0 +1,69 @@
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>jQuery DataTables using jQuery AJAX</h2>
+
+<table id="tblEmployees" class="display" style="width:100%">
+    <thead>
+        <tr>
+            <th>Employee Id</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Date Of Birth</th>
+            <th>Salary</th>
+            <th>Gender</th>
+            <th>Department</th>
+            <th>Country</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<link href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css" rel="stylesheet" />
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("AjaxMethod", "Home")',
+                data: '{}',
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (response) {
+                    OnSuccess(response);
+                },
+                error: function (xhr) {
+                    console.log(xhr);
+                    alert("Error loading data");
+                }
+            });
+        });
+
+        function OnSuccess(response) {
+            console.log(response);
+
+            $('#tblEmployees').DataTable({
+                bLengthChange: true,
+                lengthMenu: [[5, 10, -1], [5, 10, "All"]],
+                bFilter: true,
+                bSort: true,
+                bPaginate: true,
+                data: response,
+                columns: [
+                    { data: 'EmployeeId' },
+                    { data: 'FirstName' },
+                    { data: 'LastName' },
+                    { data: 'DateOfBirth' },
+                    { data: 'Salary' },
+                    { data: 'Gender' },
+                    { data: 'DepartmentName' },
+                    { data: 'Country' }
+                ]
+            });
+        }
+    </script>
+}

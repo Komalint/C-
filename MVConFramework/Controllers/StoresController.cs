@@ -1,8 +1,9 @@
-﻿using MVConFramework.Models;
+using MVConFramework.Models;
 using System.Web.Mvc;
 
 namespace MVConFramework.Controllers
 {
+    [MVConFramework.Filters.CustomAuthorize(Roles = "Admin,Restaurant")]
     public class StoresController : Controller
     {
         StoresRepo repo = new StoresRepo();

@@ -1,0 +1,185 @@
+@model List<MVConFramework.Models.Orders>
+@{
+    ViewBag.Title = "My Food Orders & Receipts";
+}
+
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-extrabold text-dark mb-1">
+                <i class="fa-solid fa-receipt text-danger me-2"></i> My Order History & Dynamic Receipts
+            </h3>
+            <p class="text-muted small mb-0">Track active orders, download official invoice receipts, and review restaurants.</p>
+        </div>
+        <a href="@Url.Action("Index", "Customer")" class="btn btn-danger rounded-pill px-4 fw-semibold" style="background-color: #ff4757; border-color: #ff4757;">
+            <i class="fa-solid fa-plus me-1"></i> Order More Food
+        </a>
+    </div>
+
+    @if (Model != null && Model.Count > 0)
+    {
+        <div class="card border-0 rounded-4 shadow-sm overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr class="small text-muted text-uppercase">
+                            <th class="ps-4">Order ID & Date</th>
+                            <th>Restaurant</th>
+                            <th>Items & Qty</th>
+                            <th>Total Amount</th>
+                            <th>Payment</th>
+                            <th>Status & Allotment</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model)
+                        {
+                            <tr>
+                                <!-- Order ID & Date -->
+                                <td class="ps-4">
+                                    <strong class="text-dark d-block">#@order.OrderId</strong>
+                                    <span class="text-muted small" style="font-size: 0.75rem;">@order.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</span>
+                                    @if (!string.IsNullOrEmpty(order.InvoiceNumber))
+                                    {
+                                        <span class="badge bg-light text-secondary border d-block mt-1" style="font-size: 0.68rem;">@order.InvoiceNumber</span>
+                                    }
+                                </td>
+
+                                <!-- Restaurant -->
+                                <td>
+                                    <strong class="text-dark d-block">@order.StoreName</strong>
+                                    <span class="text-muted small">📍 @order.DeliveryCity</span>
+                                </td>
+
+                                <!-- Items -->
+                                <td>
+                                    <span class="fw-semibold text-dark d-block text-truncate" style="max-width: 200px;" title="@order.ProductName">@order.ProductName</span>
+                                    <span class="badge bg-light text-dark border small">@order.Quantity Items</span>
+                                </td>
+
+                                <!-- Total -->
+                                <td>
+                                    <span class="fs-6 fw-bold text-danger">&#8377;@order.TotalAmount</span>
+                                    <small class="text-muted d-block" style="font-size: 0.7rem;">(incl. 7% fee)</small>
+                                </td>
+
+                                <!-- Payment -->
+                                <td>
+                                    <span class="badge bg-light text-dark border">
+                                        <i class="fa-solid fa-credit-card text-muted me-1"></i> @order.PaymentMethod
+                                    </span>
+                                </td>
+
+                                <!-- Status & Packing Allotment -->
+                                <td>
+                                    @if (order.OrderStatus == "Delivered")
+                                    {
+                                        <span class="badge bg-success rounded-pill px-3 py-1 mb-1 d-inline-block">
+                                            <i class="fa-solid fa-circle-check me-1"></i> Delivered
+                                        </span>
+                                    }
+                                    else if (order.OrderStatus == "OutForDelivery")
+                                    {
+                                        <span class="badge bg-primary rounded-pill px-3 py-1 mb-1 d-inline-block">
+                                            <i class="fa-solid fa-motorcycle me-1"></i> Out for Delivery
+                                        </span>
+                                    }
+                                    else if (order.OrderStatus == "ReadyForPickup")
+                                    {
+                                        <span class="badge bg-info text-dark rounded-pill px-3 py-1 mb-1 d-inline-block">
+                                            <i class="fa-solid fa-box me-1"></i> Food Packed
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-1 mb-1 d-inline-block">
+                                            <i class="fa-solid fa-kitchen-set me-1"></i> Packing (@order.PreparationTimeMinutes m)
+                                        </span>
+                                    }
+                                    <small class="text-muted d-block" style="font-size: 0.72rem;">Packing: @order.PreparationTimeMinutes min</small>
+                                </td>
+
+                                <!-- Actions -->
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a href="@Url.Action("Receipt", "Customer", new { id = order.OrderId })" class="btn btn-outline-secondary btn-sm rounded-pill px-3" title="View Dynamic Receipt">
+                                            <i class="fa-solid fa-file-invoice me-1"></i> Receipt
+                                        </a>
+
+                                        @if (order.OrderStatus != "Delivered")
+                                        {
+                                            <a href="@Url.Action("TrackOrder", "Customer", new { id = order.OrderId })" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold" style="background-color: #ff4757; border-color: #ff4757;">
+                                                <i class="fa-solid fa-location-arrow me-1"></i> Track
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-outline-warning text-dark btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#orderReviewModal_@order.OrderId">
+                                                <i class="fa-solid fa-star text-warning me-1"></i> Review
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Rate Order Modal -->
+                            if (order.OrderStatus == "Delivered")
+                            {
+                                <div class="modal fade" id="orderReviewModal_@order.OrderId" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content rounded-4 border-0 shadow">
+                                            <div class="modal-header border-0 pb-0">
+                                                <h5 class="modal-title fw-bold">Rate your meal from @order.StoreName</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            @using (Html.BeginForm("SubmitReview", "Customer", FormMethod.Post))
+                                            {
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="storeId" value="@order.StoreId" />
+                                                <input type="hidden" name="orderId" value="@order.OrderId" />
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label small fw-semibold">Rating (1 to 5 Stars)</label>
+                                                        <select name="rating" class="form-select rounded-3">
+                                                            <option value="5" selected>⭐⭐⭐⭐⭐ (5 - Delicious / Perfect)</option>
+                                                            <option value="4">⭐⭐⭐⭐ (4 - Very Tasty)</option>
+                                                            <option value="3">⭐⭐⭐ (3 - Decent)</option>
+                                                            <option value="2">⭐⭐ (2 - Needs Improvement)</option>
+                                                            <option value="1">⭐ (1 - Poor Experience)</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <label class="form-label small fw-semibold">Review / Feedback for the Restaurant</label>
+                                                        <textarea name="comment" class="form-control rounded-3" rows="3" placeholder="Share your experience on taste, food quality, temperature, and packaging."></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer border-0 pt-0">
+                                                    <button type="button" class="btn btn-light rounded-pill btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-danger rounded-pill btn-sm fw-bold px-4" style="background-color: #ff4757;">Submit Feedback</button>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 rounded-4 shadow-sm p-5 text-center">
+            <i class="fa-solid fa-receipt text-muted display-4 mb-3"></i>
+            <h5 class="fw-bold">No orders placed yet</h5>
+            <p class="text-muted small mb-4">Browse your favorite restaurants and treat yourself to gourmet meals.</p>
+            <div>
+                <a href="@Url.Action("Index", "Customer")" class="btn btn-danger rounded-pill px-4 fw-bold" style="background-color: #ff4757; border-color: #ff4757;">
+                    Explore Restaurants Now
+                </a>
+            </div>
+        </div>
+    }
+</div>

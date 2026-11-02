@@ -1,0 +1,191 @@
+@model MVConFramework.ViewModels.CustomerBrowseViewModel
+@{
+    ViewBag.Title = "Explore Gourmet Food & Top Restaurants - " + Model.SelectedState;
+}
+
+<!-- Hero Section with State-Restricted Ordering Header -->
+<div class="bg-dark text-white rounded-4 p-4 p-md-5 mb-4 shadow-sm position-relative overflow-hidden" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+    <div class="row align-items-center position-relative" style="z-index: 2;">
+        <div class="col-lg-7">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <span class="badge bg-danger rounded-pill px-3 py-2 fw-semibold" style="background-color: #ff4757 !important;">
+                    <i class="fa-solid fa-fire me-1"></i> Express 45-Min Fast Delivery
+                </span>
+                <span class="badge bg-light text-dark rounded-pill px-3 py-2 fw-bold shadow-sm">
+                    <i class="fa-solid fa-map-pin text-danger me-1"></i> Delivering To: @Model.SelectedState
+                </span>
+            </div>
+
+            <h1 class="display-5 fw-extrabold mb-3">Craving delicious food in @Model.SelectedState?</h1>
+            <p class="lead text-light mb-4" style="opacity: 0.85;">
+                Explore certified restaurants in <strong>@Model.SelectedState</strong>. All kitchens are 100% FSSAI hygiene-audited with dynamic preparation timers & live delivery tracking.
+            </p>
+
+            <!-- Search and City Filter Form -->
+            @using (Html.BeginForm("Index", "Customer", FormMethod.Get, new { @class = "row g-2" }))
+            {
+                <input type="hidden" name="state" value="@Model.SelectedState" />
+                <div class="col-md-4">
+                    <select name="city" class="form-select form-select-lg rounded-pill border-0 shadow-sm" onchange="this.form.submit()">
+                        <option value="">🌍 All Cities in @Model.SelectedState</option>
+                        @foreach (var c in Model.AvailableCities)
+                        {
+                            <option value="@c" @(Model.SelectedCity == c ? "selected" : "")>📍 @c</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <div class="input-group input-group-lg shadow-sm">
+                        <span class="input-group-text bg-white border-0 rounded-start-pill ps-3 text-muted">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                        <input type="text" name="search" value="@Model.SearchTerm" class="form-control border-0 rounded-end-pill" placeholder="Search dish or restaurant..." />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-danger btn-lg rounded-pill w-100 fw-bold shadow-sm" style="background-color: #ff4757; border-color: #ff4757;">
+                        Search
+                    </button>
+                </div>
+            }
+        </div>
+        <div class="col-lg-5 d-none d-lg-block text-center">
+            <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600" alt="Delicious Food" class="img-fluid rounded-4 shadow-lg" style="max-height: 280px; object-fit: cover; border: 4px solid rgba(255,255,255,0.15);" />
+        </div>
+    </div>
+</div>
+
+<!-- State Selection & Inter-State Protection Banner -->
+<div class="card border-0 rounded-4 shadow-sm p-4 mb-4" style="background: linear-gradient(90deg, #f8fafc 0%, #edf2f7 100%);">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-primary rounded-pill px-3 py-1"><i class="fa-solid fa-shield-check me-1"></i> State Delivery Guard</span>
+                <span class="fw-bold text-dark">Select Your Delivery State:</span>
+            </div>
+            <p class="text-muted small mb-0">
+                <i class="fa-solid fa-circle-info text-info me-1"></i> In compliance with state food safety laws, users sitting in <strong>@Model.SelectedState</strong> can only view and order from restaurants in <strong>@Model.SelectedState</strong>.
+            </p>
+        </div>
+
+        <!-- State Selector Pills -->
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var st in Model.AvailableStates)
+            {
+                var isCurrent = string.Equals(Model.SelectedState, st, StringComparison.OrdinalIgnoreCase);
+                <a href="@Url.Action("Index", "Customer", new { state = st })" 
+                   class="btn rounded-pill px-3 py-2 fw-bold shadow-sm @(isCurrent ? "btn-danger" : "btn-outline-dark bg-white")"
+                   style="@(isCurrent ? "background-color: #ff4757; border-color: #ff4757;" : "")">
+                    @if (st == "Delhi") { <span>🏛️ Delhi</span> }
+                    else if (st == "Gujarat") { <span>🌾 Gujarat</span> }
+                    else if (st == "Maharashtra") { <span>🌊 Maharashtra</span> }
+                    else if (st == "Rajasthan") { <span>🏰 Rajasthan</span> }
+                    else { <span>🕌 Uttar Pradesh</span> }
+                    @if (isCurrent) { <i class="fa-solid fa-check ms-1"></i> }
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- State & Store Count Summary Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1 text-dark">
+            <i class="fa-solid fa-store text-danger me-2"></i>
+            Approved Restaurants in @Model.SelectedState
+        </h4>
+        <span class="text-muted small">Showing @Model.StoresList.Count certified kitchens ready to deliver</span>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.SelectedCity))
+    {
+        <a href="@Url.Action("Index", "Customer", new { state = Model.SelectedState })" class="badge bg-secondary text-white text-decoration-none rounded-pill px-3 py-2">
+            City: @Model.SelectedCity <i class="fa-solid fa-xmark ms-1"></i>
+        </a>
+    }
+</div>
+
+<!-- Restaurants Grid -->
+<div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 mb-5">
+    @if (Model.StoresList != null && Model.StoresList.Count > 0)
+    {
+        foreach (var store in Model.StoresList)
+        {
+            <div class="col">
+                <div class="card h-100 food-card shadow-sm border-0 position-relative rounded-4 overflow-hidden">
+
+                    <!-- Image / Header -->
+                    <div class="position-relative overflow-hidden" style="height: 190px;">
+                        <img src="@(string.IsNullOrEmpty(store.ImageUrl) ? "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500" : store.ImageUrl)" 
+                             class="card-img-top w-100 h-100" style="object-fit: cover;" alt="@store.StoreName" />
+                        
+                        <!-- Rating Badge -->
+                        <div class="position-absolute top-0 end-0 m-3 badge bg-white text-dark shadow-sm px-2 py-1 rounded-pill fw-bold d-flex align-items-center gap-1">
+                            <i class="fa-solid fa-star text-warning"></i>
+                            <span>@store.Rating.ToString("0.0")</span>
+                            <span class="text-muted" style="font-size: 0.72rem;">(@store.ReviewCount)</span>
+                        </div>
+
+                        <!-- 200+ Orders Trust Certificate Badge -->
+                        @if (store.TotalOrdersCompleted >= 200 && store.Rating >= 3.5m)
+                        {
+                            <div class="position-absolute top-0 start-0 m-3 badge bg-warning text-dark shadow px-2 py-1 rounded-pill fw-bold d-flex align-items-center gap-1" title="Surpassed 200 Orders with 3.5+ Rating - Certified Trusted Restaurant">
+                                <i class="fa-solid fa-award"></i>
+                                <span>Trusted (200+ Orders)</span>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Body -->
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title fw-bold text-dark mb-0">@store.StoreName</h5>
+                            <span class="badge bg-light text-dark border fw-bold">📍 @store.City, @store.State</span>
+                        </div>
+
+                        <p class="text-muted small mb-2"><i class="fa-solid fa-bowl-rice text-danger me-1"></i> @store.Cuisine</p>
+                        <p class="text-secondary small mb-3 text-truncate" title="@store.Address">
+                            <i class="fa-solid fa-location-dot text-muted me-1"></i> @(string.IsNullOrEmpty(store.Address) ? "Central Market, " + store.City : store.Address)
+                        </p>
+
+                        <!-- Hygiene & Safety Badges -->
+                        <div class="bg-light p-2 rounded-3 mb-3 d-flex justify-content-between align-items-center small">
+                            <div class="d-flex align-items-center gap-1 text-success fw-semibold">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>Hygiene: @store.HygieneScore/100</span>
+                            </div>
+                            <div class="text-muted" style="font-size: 0.75rem;">
+                                FSSAI: <span class="fw-bold">@store.FssaiLicenseNo</span>
+                            </div>
+                        </div>
+
+                        <!-- Metrics Footer -->
+                        <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted d-block">Orders Served</small>
+                                <span class="fw-bold text-dark">@store.TotalOrdersCompleted+</span>
+                            </div>
+
+                            <a href="@Url.Action("RestaurantMenu", "Customer", new { id = store.StoreId })" class="btn btn-danger btn-sm rounded-pill px-3 py-2 fw-semibold" style="background-color: #ff4757; border-color: #ff4757;">
+                                <i class="fa-solid fa-book-open me-1"></i> View Menu & Order
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12 py-5 text-center">
+            <div class="p-5 bg-white rounded-4 shadow-sm">
+                <i class="fa-solid fa-store-slash text-muted display-4 mb-3"></i>
+                <h4>No restaurants found in @Model.SelectedState</h4>
+                <p class="text-muted">Try selecting a different state from the selector above.</p>
+                <a href="@Url.Action("Index", "Customer", new { state = "Delhi" })" class="btn btn-outline-danger rounded-pill px-4">Switch to Delhi</a>
+            </div>
+        </div>
+    }
+</div>

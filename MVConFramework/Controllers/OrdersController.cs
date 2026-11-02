@@ -1,4 +1,4 @@
-﻿using MVConFramework.Models;
+using MVConFramework.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +8,7 @@ using System.Web.Mvc;
 
 namespace MVConFramework.Controllers
 {
+    [MVConFramework.Filters.CustomAuthorize(Roles = "Admin,Restaurant")]
     public class OrdersController : Controller
     {
         public OrdersRepo or = new OrdersRepo();

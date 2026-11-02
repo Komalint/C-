@@ -4,6 +4,9 @@ namespace MVConFramework.ViewModels
 {
     public class LoginViewModel
     {
+        [Display(Name = "Login As")]
+        public string LoginRole { get; set; } = "Customer"; // "Customer", "Restaurant", "DeliveryAgent", "Admin"
+
         [Required(ErrorMessage = "Please enter your username or email")]
         [Display(Name = "Username or Email")]
         public string EmailOrUsername { get; set; }

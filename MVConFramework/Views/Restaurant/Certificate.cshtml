@@ -1,0 +1,164 @@
+@model MVConFramework.Models.RestaurantCertificate
+@{
+    var store = (MVConFramework.Models.Stores)ViewBag.Store;
+    ViewBag.Title = "Certificate of Quality & Customer Trust";
+}
+
+<style>
+    /* Certificate Ornate Design */
+    .cert-frame {
+        background: #ffffff;
+        border: 14px solid #1e1b4b;
+        padding: 45px;
+        position: relative;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        border-radius: 8px;
+    }
+    .cert-inner-border {
+        border: 3px double #d97706;
+        padding: 40px;
+        position: relative;
+        background: radial-gradient(circle at center, #ffffff 60%, #fffbeb 100%);
+    }
+    .cert-seal {
+        width: 110px;
+        height: 110px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        box-shadow: 0 8px 20px rgba(217, 119, 6, 0.4);
+        border: 4px dashed #ffffff;
+        text-align: center;
+        margin: 0 auto;
+    }
+
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        #printableCertificate, #printableCertificate * {
+            visibility: visible;
+        }
+        #printableCertificate {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 20px;
+            box-shadow: none;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+
+<div class="py-4">
+
+    <!-- Action Bar (Hidden on print) -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div>
+            <h3 class="fw-extrabold text-dark mb-1">
+                <i class="fa-solid fa-award text-warning me-2"></i> Quality & Customer Trust Certificate
+            </h3>
+            <p class="text-muted small mb-0">Awarded to food partners surpassing 200 completed orders with verified 3.5+ star customer ratings.</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="@Url.Action("Index", "Restaurant", new { storeId = store != null ? store.StoreId : 1 })" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Kitchen
+            </a>
+            <button type="button" class="btn btn-warning rounded-pill px-4 fw-bold shadow text-dark" onclick="window.print()">
+                <i class="fa-solid fa-download me-2"></i> Print / Download Certificate (PDF)
+            </button>
+        </div>
+    </div>
+
+    <!-- The Certificate Document -->
+    <div class="row justify-content-center">
+        <div class="col-xl-11" id="printableCertificate">
+
+            <div class="cert-frame">
+                <div class="cert-inner-border text-center">
+
+                    <!-- Top Emblem & Header -->
+                    <div class="mb-3">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-dark text-warning rounded-circle p-3 mb-2" style="width: 60px; height: 60px;">
+                            <i class="fa-solid fa-utensils fs-3"></i>
+                        </div>
+                        <h6 class="text-uppercase tracking-wide fw-bold text-secondary mb-1" style="letter-spacing: 3px;">
+                            FoodExpress Standards & Quality Authority
+                        </h6>
+                        <h1 class="display-6 fw-extrabold text-dark text-uppercase mb-2" style="font-family: Georgia, serif; letter-spacing: 1px;">
+                            Certificate of Customer Trust & Hygiene
+                        </h1>
+                        <div class="text-warning fs-5 mb-4">
+                            ★ ★ ★ ★ ★
+                        </div>
+                    </div>
+
+                    <!-- Citation Body -->
+                    <p class="lead text-muted mb-2 fst-italic">This honor is proudly awarded to:</p>
+                    <h2 class="display-5 fw-extrabold text-danger mb-1" style="font-family: Georgia, serif;">
+                        @(Model != null ? Model.StoreName : (store != null ? store.StoreName : "The Royal Biryani House"))
+                    </h2>
+                    <p class="fw-semibold text-dark mb-4">
+                        📍 @(Model != null ? Model.City : (store != null ? store.City : "Delhi")), India | Managed by: <strong>@(Model != null ? Model.OwnerName : (store != null ? store.OwnerName : "Chef Partner"))</strong>
+                    </p>
+
+                    <div class="mx-auto my-4 text-dark" style="max-width: 720px; font-size: 1.05rem; line-height: 1.7;">
+                        In official recognition of successfully achieving and surpassing <strong>200+ completed food orders</strong> with an outstanding verified customer satisfaction rating of <strong>@(Model != null ? Model.AverageRatingAtIssue.ToString("0.0") : (store != null ? store.Rating.ToString("0.0") : "4.6")) / 5.0 Stars</strong>, while maintaining 100% adherence to <strong>FSSAI Food Safety and Kitchen Hygiene Standards</strong>.
+                    </div>
+
+                    <!-- Seal & Verification Grid -->
+                    <div class="row align-items-center my-4 py-3 border-top border-bottom border-warning">
+                        <div class="col-md-4 text-center text-md-start mb-3 mb-md-0">
+                            <small class="text-muted text-uppercase d-block" style="font-size: 0.75rem;">Certificate Identification</small>
+                            <strong class="text-dark">@(Model != null ? Model.CertificateNumber : "CERT-TRUST-DEL-21501")</strong>
+                            <div class="text-muted small">Issue Date: @(Model != null ? Model.IssuedDate.ToString("dd MMMM yyyy") : DateTime.Now.ToString("dd MMMM yyyy"))</div>
+                        </div>
+
+                        <!-- Golden Seal Ribbon -->
+                        <div class="col-md-4 text-center mb-3 mb-md-0">
+                            <div class="cert-seal">
+                                <i class="fa-solid fa-shield-halved fs-3 mb-1"></i>
+                                <span style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">100% VERIFIED<br />TRUSTED</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 text-center text-md-end">
+                            <small class="text-muted text-uppercase d-block" style="font-size: 0.75rem;">FSSAI & Hygiene Benchmark</small>
+                            <strong class="text-success">FSSAI Lic: @(Model != null ? Model.FssaiLicenseNo : (store != null ? store.FssaiLicenseNo : "FSSAI-10022021000101"))</strong>
+                            <div class="text-muted small">Hygiene Score: <strong>@(Model != null ? Model.HygieneScore : (store != null ? store.HygieneScore : 95)) / 100</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Signatures -->
+                    <div class="row pt-4 justify-content-between text-center">
+                        <div class="col-4">
+                            <div class="border-bottom border-dark pb-1 mx-auto" style="max-width: 180px;">
+                                <span style="font-family: 'Brush Script MT', cursive; font-size: 1.5rem; color: #1e1b4b;">Dr. A. Sharma</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">Chief Food Safety Auditor</small>
+                        </div>
+
+                        <div class="col-4">
+                            <div class="border-bottom border-dark pb-1 mx-auto" style="max-width: 180px;">
+                                <span style="font-family: 'Brush Script MT', cursive; font-size: 1.5rem; color: #1e1b4b;">Komal Gupta</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">Platform Operations Director</small>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>

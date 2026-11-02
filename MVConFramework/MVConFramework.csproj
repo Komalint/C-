@@ -119,6 +119,7 @@
   <ItemGroup>
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
+    <Compile Include="Filters\CustomAuthorizeAttribute.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\OrdersController.cs" />
@@ -140,6 +141,14 @@
     <Compile Include="ViewModel\DashboardViewModel.cs" />
     <Compile Include="ViewModel\LoginViewModel.cs" />
     <Compile Include="ViewModel\RegisterViewModel.cs" />
+    <Compile Include="Controllers\CustomerController.cs" />
+    <Compile Include="Controllers\RestaurantController.cs" />
+    <Compile Include="Controllers\AdminFoodController.cs" />
+    <Compile Include="Controllers\DeliveryAgentController.cs" />
+    <Compile Include="Controllers\NotificationController.cs" />
+    <Compile Include="Models\FoodDeliveryModels.cs" />
+    <Compile Include="Models\FoodDeliveryRepo.cs" />
+    <Compile Include="ViewModel\FoodDeliveryViewModels.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap-grid.css" />
@@ -207,6 +216,20 @@
     <Content Include="Views\Account\Login.cshtml" />
     <Content Include="Views\Account\Register.cshtml" />
     <Content Include="Views\Dashboard\Index.cshtml" />
+    <Content Include="Views\Customer\Index.cshtml" />
+    <Content Include="Views\Customer\RestaurantMenu.cshtml" />
+    <Content Include="Views\Customer\Checkout.cshtml" />
+    <Content Include="Views\Customer\Receipt.cshtml" />
+    <Content Include="Views\Customer\TrackOrder.cshtml" />
+    <Content Include="Views\Customer\MyOrders.cshtml" />
+    <Content Include="Views\Restaurant\Index.cshtml" />
+    <Content Include="Views\Restaurant\ManageMenu.cshtml" />
+    <Content Include="Views\Restaurant\Invoices.cshtml" />
+    <Content Include="Views\Restaurant\Reviews.cshtml" />
+    <Content Include="Views\Restaurant\Certificate.cshtml" />
+    <Content Include="Views\AdminFood\Index.cshtml" />
+    <Content Include="Views\DeliveryAgent\Index.cshtml" />
+    <Content Include="Views\DeliveryAgent\Enroll.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -279,3 +302,4 @@
   <Target Name="AfterBuild">
   </Target> -->
 </Project>
+

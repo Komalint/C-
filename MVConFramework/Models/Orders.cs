@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace MVConFramework.Models
@@ -43,5 +43,20 @@ namespace MVConFramework.Models
         [Required(ErrorMessage = "Delivery City is required")]
         [StringLength(100, ErrorMessage = "Delivery City cannot exceed 100 characters")]
         public string DeliveryCity { get; set; }
+
+        // Food Delivery Extensions
+        public string OrderStatus { get; set; } = "Delivered"; // Placed, Preparing, ReadyForPickup, OutForDelivery, Delivered, Cancelled
+        public int PreparationTimeMinutes { get; set; } = 15;
+        public int? AssignedAgentId { get; set; }
+        public string AssignedAgentName { get; set; }
+        public string AssignedAgentPhone { get; set; }
+        public string DeliveryAddress { get; set; }
+        public int EstimatedDeliveryMinutes { get; set; } = 45;
+        public decimal DistanceKm { get; set; } = 3.5m;
+        public string InvoiceNumber { get; set; }
+        public decimal PlatformFee { get; set; } = 0.00m;
+        public DateTime? CreatedAt { get; set; } = DateTime.Now;
+        public int? CustomerId { get; set; }
+        public decimal DeliveryEarnings { get; set; } = 60.00m;
     }
 }

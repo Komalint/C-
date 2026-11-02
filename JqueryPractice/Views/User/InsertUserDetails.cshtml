@@ -1,0 +1,108 @@
+@model JqueryPractice.Models.UserDetails
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>InsertUserDetails</title>
+    <style type="text/css">
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        .form-table td {
+            padding: 5px;
+            border: none;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ccc;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #f2f2f2;
+        }
+        input[type="text"] {
+            padding: 4px;
+            width: 200px;
+        }
+        input[type="submit"] {
+            padding: 5px 15px;
+            cursor: pointer;
+        }
+    </style>
+    <script src="~/Scripts/jquery-3.7.0.min.js"></script>
+</head>
+<body>
+    @using (Html.BeginForm("InsertUserDetails", "User", FormMethod.Post))
+    {
+        <table class="form-table">
+            <tr>
+                <td>User Name:</td>
+                <td>@Html.TextBoxFor(u => u.UserName)</td>
+            </tr>
+            <tr>
+                <td>Education:</td>
+                <td>@Html.TextBoxFor(u => u.Education)</td>
+            </tr>
+            <tr>
+                <td>Location:</td>
+                <td>@Html.TextBoxFor(u => u.Location)</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><input type="submit" value="Register" /></td>
+            </tr>
+        </table>
+    }
+
+    <h4>User Details</h4>
+    @if (Model != null)
+    {
+        if (Model.usersinfo != null && Model.usersinfo.Count > 0)
+        {
+            <table class="data-table">
+                <tr>
+                    <th>UserId</th>
+                    <th>UserName</th>
+                    <th>Education</th>
+                    <th>Location</th>
+                </tr>
+                @foreach (var item in Model.usersinfo)
+                {
+                    <tr>
+                        <td>@Html.DisplayFor(modelitem => item.UserId)</td>
+                        <td>@Html.DisplayFor(modelitem => item.UserName)</td>
+                        <td>@Html.DisplayFor(modelitem => item.Education)</td>
+                        <td>@Html.DisplayFor(modelitem => item.Location)</td>
+                    </tr>
+                }
+            </table>
+        }
+        else
+        {
+            <b>No Details Found.</b>
+        }
+    }
+
+    <script type="text/javascript">
+        $(function () {
+            var msg = '@ViewData["result"]';
+            if (msg == '1') {
+                alert("User Details Inserted Successfully");
+                window.location.href = "@Url.Action("InsertUserDetails", "User")";
+            }
+        });
+    </script>
+</body>
+</html>

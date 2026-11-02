@@ -1,0 +1,121 @@
+@{
+    ViewBag.Title = "Routing";
+}
+
+<main aria-labelledby="title" class="mt-4">
+    <h2 id="title">Routing</h2>
+    <p class="lead">Test all the different Routing, Redirection, and HTTP Status Results from this page.</p>
+
+    <div class="row">
+        <!-- 1. Server-Side Redirection -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">1. Server-Side Routing &amp; Redirects</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Test different <code>ActionResult</code> redirect methods in ASP.NET MVC:</p>
+
+                    <div class="mb-3">
+                        <label class="fw-bold d-block">RedirectResult (External URL)</label>
+                        <small class="text-muted d-block mb-2">Executes <code>Redirect("https://mccit.net")</code> (Slide 2)</small>
+                        <a href="@Url.Action("ExternalRedirect", "Demo")" class="btn btn-outline-primary btn-sm">
+                            Test External Redirect &raquo;
+                        </a>
+                    </div>
+                    <hr />
+
+                    <div class="mb-3">
+                        <label class="fw-bold d-block">RedirectToRouteResult</label>
+                        <small class="text-muted d-block mb-2">Executes <code>RedirectToRoute(new { controller = "Home", action = "Contact" })</code> (Slide 2 &amp; 3)</small>
+                        <a href="@Url.Action("RouteRedirect", "Demo")" class="btn btn-outline-primary btn-sm">
+                            Test RedirectToRoute &raquo;
+                        </a>
+                    </div>
+                    <hr />
+
+                    <div class="mb-3">
+                        <label class="fw-bold d-block">RedirectToAction</label>
+                        <small class="text-muted d-block mb-2">Executes <code>RedirectToAction("InsertUserDetails", "User")</code> (Slide 3)</small>
+                        <a href="@Url.Action("ActionRedirect", "Demo")" class="btn btn-outline-primary btn-sm">
+                            Test RedirectToAction &raquo;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Client-Side jQuery Redirection -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">2. Client-Side jQuery Routing</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Redirect using JavaScript / jQuery <code>window.location.href</code> on button click:</p>
+
+                    <div class="mb-3">
+                        <label class="fw-bold d-block">jQuery Button Click Redirect (Slide 4)</label>
+                        <small class="text-muted d-block mb-2">Runs <code>window.location.href = "&#64;Url.Action("InsertUserDetails", "User")"</code></small>
+                        <button type="button" id="btnRedirect" class="btn btn-success btn-sm">
+                            Click to Redirect via jQuery (#btnRedirect)
+                        </button>
+                    </div>
+                    <hr />
+
+                    <div class="mb-3">
+                        <label class="fw-bold d-block">User Registration &amp; Stored Procedure Page</label>
+                        <small class="text-muted d-block mb-2">Tests the User details insert + table fetch (Slides 5-24)</small>
+                        <a href="@Url.Action("InsertUserDetails", "User")" class="btn btn-outline-success btn-sm">
+                            Open User Details Page &raquo;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. HTTP Status Results -->
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">3. HTTP Status Results (Slides 26 - 29)</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Click each button to test HTTP status codes and custom error messages returned by the controller:</p>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="@Url.Action("UnauthorizedStatusCode", "Demo")" target="_blank" class="btn btn-outline-danger btn-sm">
+                            401 Unauthorized (HttpStatusCodeResult)
+                        </a>
+
+                        <a href="@Url.Action("BadGateway", "Demo")" target="_blank" class="btn btn-outline-danger btn-sm">
+                            502 Bad Gateway (HttpStatusCodeResult)
+                        </a>
+
+                        <a href="@Url.Action("UnauthorizedResult", "Demo")" target="_blank" class="btn btn-outline-danger btn-sm">
+                            401 Unauthorized (HttpUnauthorizedResult)
+                        </a>
+
+                        <a href="@Url.Action("NotFoundAction", "Demo")" target="_blank" class="btn btn-outline-danger btn-sm">
+                            404 Not Found (HttpNotFoundResult)
+                        </a>
+                    </div>
+                    <small class="text-muted d-block mt-2">(Opens in a new browser tab to view the HTTP error response page)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+@section scripts {
+    <script type="text/javascript">
+        $(function () {
+            // Slide 4: jQuery click event redirecting via window.location.href
+            $("#btnRedirect").click(function () {
+                window.location.href = "@Url.Action("InsertUserDetails", "User")";
+            });
+        });
+    </script>
+}

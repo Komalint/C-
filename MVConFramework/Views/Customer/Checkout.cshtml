@@ -1,0 +1,371 @@
+@model MVConFramework.ViewModels.CheckoutViewModel
+@{
+    ViewBag.Title = "Secure Checkout & Payment Gateway";
+}
+
+<div class="py-4">
+    <div class="row g-4">
+
+        <!-- Left: Delivery Details & Payment Gateway (7 Cols) -->
+        <div class="col-lg-7">
+
+            <!-- Inter-State Restriction Warning Banner -->
+            <div id="stateMismatchAlert" class="alert alert-danger rounded-4 p-3 mb-4 @(Model.IsInterStateRestricted ? "" : "d-none") d-flex align-items-center gap-3">
+                <i class="fa-solid fa-triangle-exclamation fs-2 text-danger"></i>
+                <div>
+                    <h6 class="fw-bold mb-1">Inter-State Food Delivery Restricted</h6>
+                    <p class="mb-0 small" id="stateMismatchText">
+                        A customer located in <strong>@Model.DeliveryState</strong> cannot order food from <strong>@Model.StoreName</strong> in <strong>@Model.StoreState</strong>. Under state food licensing laws, restaurants can only deliver within their registered state.
+                    </p>
+                </div>
+            </div>
+
+            <!-- 1. Delivery Details Card -->
+            <div class="card border-0 rounded-4 shadow-sm p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                        <span class="badge bg-danger rounded-circle p-2" style="background-color: #ff4757 !important;"><i class="fa-solid fa-location-dot"></i></span>
+                        Delivery Address &amp; Location Verification
+                    </h5>
+                    <span class="badge bg-light text-dark border">
+                        Restaurant State: <strong>@Model.StoreState</strong>
+                    </span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Customer Full Name</label>
+                        <input type="text" id="custNameInput" class="form-control rounded-3" value="@Model.CustomerName" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Phone Number (For Delivery Updates)</label>
+                        <input type="tel" id="custPhoneInput" class="form-control rounded-3" value="@Model.CustomerPhone" required />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Complete Delivery Address</label>
+                        <input type="text" id="custAddressInput" class="form-control rounded-3" value="@Model.DeliveryAddress" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Delivery City</label>
+                        <input type="text" id="custCityInput" class="form-control rounded-3 bg-light" value="@Model.DeliveryCity" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Delivery State (State Policy)</label>
+                        <select id="custStateSelect" class="form-select rounded-3 fw-bold" onchange="onStateChanged(this.value)">
+                            <option value="Delhi" @(string.Equals(Model.DeliveryState, "Delhi", StringComparison.OrdinalIgnoreCase) ? "selected" : "")>Delhi</option>
+                            <option value="Gujarat" @(string.Equals(Model.DeliveryState, "Gujarat", StringComparison.OrdinalIgnoreCase) ? "selected" : "")>Gujarat</option>
+                            <option value="Maharashtra" @(string.Equals(Model.DeliveryState, "Maharashtra", StringComparison.OrdinalIgnoreCase) ? "selected" : "")>Maharashtra</option>
+                            <option value="Rajasthan" @(string.Equals(Model.DeliveryState, "Rajasthan", StringComparison.OrdinalIgnoreCase) ? "selected" : "")>Rajasthan</option>
+                            <option value="Uttar Pradesh" @(string.Equals(Model.DeliveryState, "Uttar Pradesh", StringComparison.OrdinalIgnoreCase) ? "selected" : "")>Uttar Pradesh</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Dummy Payment Gateway Card -->
+            <div class="card border-0 rounded-4 shadow-sm p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                        <span class="badge bg-danger rounded-circle p-2" style="background-color: #ff4757 !important;"><i class="fa-solid fa-credit-card"></i></span>
+                        Select Payment Method
+                    </h5>
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-1">
+                        <i class="fa-solid fa-lock me-1"></i> 256-bit Dummy Gateway
+                    </span>
+                </div>
+
+                <!-- Payment Method Pills / Tabs -->
+                <ul class="nav nav-pills nav-fill mb-4 p-1 bg-light rounded-4 gap-1" id="paymentTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active rounded-pill fw-semibold py-2" id="upi-tab" data-bs-toggle="pill" data-bs-target="#tab-upi" type="button" role="tab" onclick="setPaymentMethod('UPI')">
+                            <i class="fa-brands fa-google-pay me-1"></i> UPI / Apps
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill fw-semibold py-2" id="qr-tab" data-bs-toggle="pill" data-bs-target="#tab-qr" type="button" role="tab" onclick="setPaymentMethod('Dynamic QR Code')">
+                            <i class="fa-solid fa-qrcode me-1"></i> Dynamic QR
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill fw-semibold py-2" id="card-tab" data-bs-toggle="pill" data-bs-target="#tab-card" type="button" role="tab" onclick="setPaymentMethod('Credit/Debit Card')">
+                            <i class="fa-regular fa-credit-card me-1"></i> Card
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill fw-semibold py-2" id="cod-tab" data-bs-toggle="pill" data-bs-target="#tab-cod" type="button" role="tab" onclick="setPaymentMethod('Cash on Delivery')">
+                            <i class="fa-solid fa-money-bill-wave me-1"></i> COD
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Payment Tab Contents -->
+                <div class="tab-content border rounded-4 p-4 bg-light" id="paymentTabsContent">
+
+                    <!-- TAB 1: UPI & Apps -->
+                    <div class="tab-pane fade show active" id="tab-upi" role="tabpanel">
+                        <h6 class="fw-bold mb-3">Pay via Instant UPI</h6>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6 col-md-3">
+                                <button type="button" class="btn btn-outline-secondary w-100 py-2 rounded-3 text-center small fw-semibold upi-app-btn" onclick="selectUpiApp('Google Pay')">
+                                    <i class="fa-brands fa-google text-danger me-1"></i> GPay
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <button type="button" class="btn btn-outline-secondary w-100 py-2 rounded-3 text-center small fw-semibold upi-app-btn" onclick="selectUpiApp('PhonePe')">
+                                    <i class="fa-solid fa-mobile-screen-button text-primary me-1"></i> PhonePe
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <button type="button" class="btn btn-outline-secondary w-100 py-2 rounded-3 text-center small fw-semibold upi-app-btn" onclick="selectUpiApp('Paytm')">
+                                    <i class="fa-solid fa-wallet text-info me-1"></i> Paytm
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <button type="button" class="btn btn-outline-secondary w-100 py-2 rounded-3 text-center small fw-semibold upi-app-btn" onclick="selectUpiApp('BHIM UPI')">
+                                    <i class="fa-solid fa-building-columns text-success me-1"></i> BHIM
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Or enter Virtual Payment Address (UPI ID)</label>
+                            <div class="input-group">
+                                <input type="text" id="upiIdInput" class="form-control rounded-start-3" value="komal.gupta@okaxis" placeholder="username@bank" />
+                                <button type="button" class="btn btn-dark rounded-end-3" onclick="verifyUpi()"><i class="fa-solid fa-circle-check text-success me-1"></i> Verified</button>
+                            </div>
+                            <small class="text-success mt-1 d-block"><i class="fa-solid fa-check"></i> UPI ID verified for instant auto-debit of &#8377;@Model.TotalAmount.ToString("0")</small>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Dynamic QR Code -->
+                    <div class="tab-pane fade text-center" id="tab-qr" role="tabpanel">
+                        <h6 class="fw-bold mb-2">Scan Dynamic UPI QR Code to Pay</h6>
+                        <p class="text-muted small mb-3">Scan with any UPI app (GPay, PhonePe, Paytm, Cred) to pay exact &#8377;@Model.TotalAmount.ToString("0")</p>
+
+                        <!-- Dynamic QR SVG Simulation -->
+                        <div class="p-3 bg-white d-inline-block rounded-4 shadow-sm border mb-3">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=foodexpress.merchant@icici%26pn=@Uri.EscapeDataString(Model.StoreName)%26am=@Model.TotalAmount%26cu=INR" 
+                                 alt="Dynamic Payment QR Code" 
+                                 class="img-fluid rounded-3" 
+                                 style="width: 170px; height: 170px;" />
+                            <div class="mt-2 fw-bold text-dark small">
+                                <i class="fa-solid fa-utensils text-danger me-1"></i> @Model.StoreName
+                            </div>
+                            <div class="badge bg-danger rounded-pill px-3 py-1 mt-1">&#8377;@Model.TotalAmount.ToString("0")</div>
+                        </div>
+                        <p class="small text-success fw-medium"><i class="fa-solid fa-spinner fa-spin me-1"></i> Waiting for UPI payment confirmation...</p>
+                    </div>
+
+                    <!-- TAB 3: Credit / Debit Card -->
+                    <div class="tab-pane fade" id="tab-card" role="tabpanel">
+                        <h6 class="fw-bold mb-3">Enter Card Details</h6>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Card Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="fa-regular fa-credit-card"></i></span>
+                                <input type="text" id="cardNumberInput" class="form-control font-monospace" value="4532 **** **** 8821" maxlength="19" />
+                                <span class="input-group-text bg-white text-primary"><i class="fa-brands fa-cc-visa fs-5"></i></span>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Valid Thru (MM/YY)</label>
+                                <input type="text" class="form-control" value="08/29" />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">CVV</label>
+                                <input type="password" class="form-control" value="789" maxlength="4" />
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Cardholder Name</label>
+                            <input type="text" class="form-control" value="Komal Gupta" />
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: Cash on Delivery -->
+                    <div class="tab-pane fade" id="tab-cod" role="tabpanel">
+                        <div class="text-center py-3">
+                            <i class="fa-solid fa-hand-holding-dollar fs-1 text-success mb-2"></i>
+                            <h6 class="fw-bold">Pay &#8377;@Model.TotalAmount.ToString("0") on Delivery</h6>
+                            <p class="text-muted small mb-0">Please keep exact change ready when the delivery rider arrives with your order.</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Main Order Placement Form -->
+                @using (Html.BeginForm("ProcessPayment", "Customer", FormMethod.Post, new { id = "mainPaymentForm", @class = "mt-4" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="StoreId" value="@Model.StoreId" />
+                    <input type="hidden" name="StoreName" value="@Model.StoreName" />
+                    <input type="hidden" name="StoreState" id="formStoreState" value="@Model.StoreState" />
+                    <input type="hidden" name="CustomerName" id="formCustName" value="@Model.CustomerName" />
+                    <input type="hidden" name="CustomerPhone" id="formCustPhone" value="@Model.CustomerPhone" />
+                    <input type="hidden" name="DeliveryAddress" id="formCustAddress" value="@Model.DeliveryAddress" />
+                    <input type="hidden" name="DeliveryCity" value="@Model.DeliveryCity" />
+                    <input type="hidden" name="DeliveryState" id="formCustState" value="@Model.DeliveryState" />
+                    <input type="hidden" name="PaymentMethod" id="formPaymentMethod" value="UPI" />
+                    <input type="hidden" name="TotalAmount" value="@Model.TotalAmount" />
+                    <input type="hidden" name="TotalItemCount" value="@Model.TotalItemCount" />
+                    <input type="hidden" name="PreparationTimeMinutes" value="@Model.PreparationTimeMinutes" />
+                    <input type="hidden" name="ItemsSummary" value="@Model.ItemsSummary" />
+
+                    <button type="button" id="payButton" 
+                            class="btn btn-lg w-100 rounded-pill fw-bold shadow-sm py-3 @(Model.IsInterStateRestricted ? "btn-secondary" : "btn-danger")" 
+                            style="@(Model.IsInterStateRestricted ? "" : "background-color: #ff4757; border-color: #ff4757;")" 
+                            @(Model.IsInterStateRestricted ? "disabled" : "")
+                            onclick="executePaymentFlow()">
+                        <i class="fa-solid fa-lock me-2"></i> Pay &#8377;@Model.TotalAmount.ToString("0") &amp; Place Order
+                    </button>
+                }
+
+                <div class="text-center mt-3 text-muted" style="font-size: 0.78rem;">
+                    <i class="fa-solid fa-shield-check text-success me-1"></i> Safe &amp; Secure. Upon payment, your dynamic receipt is instantly generated with restaurant details.
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right: Order Summary & Preparation Time Allotment (5 Cols) -->
+        <div class="col-lg-5">
+            <div class="card border-0 rounded-4 shadow-sm p-4 sticky-top" style="top: 90px;">
+                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                    <h5 class="fw-bold mb-0">Order Summary</h5>
+                    <span class="badge bg-light text-dark border">@Model.TotalItemCount Items</span>
+                </div>
+
+                <!-- Restaurant Header in Receipt preview -->
+                <div class="p-3 bg-light rounded-3 mb-3 border d-flex align-items-center gap-3">
+                    <div class="rounded-3 p-2 bg-white text-danger border">
+                        <i class="fa-solid fa-utensils fs-4"></i>
+                    </div>
+                    <div>
+                        <strong class="text-dark d-block">@Model.StoreName</strong>
+                        <span class="text-muted small">Location: <strong>@Model.DeliveryCity, @Model.StoreState</strong></span>
+                    </div>
+                </div>
+
+                <!-- Items List -->
+                <div class="mb-3" style="max-height: 220px; overflow-y: auto;">
+                    @if (Model.Items != null && Model.Items.Count > 0)
+                    {
+                        foreach (var it in Model.Items)
+                        {
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom small">
+                                <div>
+                                    <span class="fw-semibold text-dark">@it.ItemName</span>
+                                    <span class="text-muted d-block" style="font-size: 0.75rem;">Qty: @it.Quantity x &#8377;@it.Price.ToString("0")</span>
+                                </div>
+                                <span class="fw-bold text-dark">&#8377;@it.Subtotal.ToString("0")</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-muted small py-2">Assorted Food Order (@Model.TotalItemCount items)</div>
+                    }
+                </div>
+
+                <!-- Item Packing Time Allotment Indicator -->
+                <div class="p-3 rounded-4 mb-3 border" style="background-color: #fff8f6; border-color: #ffe4de !important;">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="fa-solid fa-stopwatch text-danger fs-5"></i>
+                        <span class="fw-bold text-dark">Allotted Kitchen Packing Time:</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="fs-4 fw-extrabold text-danger">@Model.PreparationTimeMinutes min</span>
+                        <span class="badge bg-secondary rounded-pill small">
+                            @(Model.TotalItemCount <= 2 ? "1-2 Items (15m)" : (Model.TotalItemCount <= 5 ? "3-5 Items (30m)" : "10+ Items (1h)"))
+                        </span>
+                    </div>
+                    <small class="text-muted d-block mt-1">
+                        Estimated arrival at your doorstep: <strong class="text-dark">within 25-35 min</strong> (Rider allotted upon packing)
+                    </small>
+                </div>
+
+                <!-- Financial Calculation -->
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Items Subtotal</span>
+                        <span>&#8377;@Model.ItemTotal.ToString("0")</span>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Taxes &amp; GST (5%)</span>
+                        <span>&#8377;@Model.TaxAmount.ToString("0")</span>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted mb-2">
+                        <span>Delivery Fee</span>
+                        <span>@(Model.DeliveryFee == 0 ? "FREE" : "&#8377;" + Model.DeliveryFee.ToString("0"))</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between fw-bold text-dark fs-5 pt-2 border-top">
+                        <span>Grand Total</span>
+                        <span class="text-danger">&#8377;@Model.TotalAmount.ToString("0")</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        var restaurantState = "@(Model.StoreState ?? "")".trim().toLowerCase();
+
+        function onStateChanged(newState) {
+            $("#formCustState").val(newState);
+            var selectedStateClean = (newState || "").trim().toLowerCase();
+
+            if (selectedStateClean !== restaurantState) {
+                $("#stateMismatchAlert").removeClass("d-none");
+                $("#stateMismatchText").html("<strong>Inter-State Ordering Blocked:</strong> You are located in <strong>" + newState + "</strong>, but this restaurant is located in <strong>@Model.StoreState</strong>. Under state food licensing laws, restaurants cannot deliver across state lines.");
+                $("#payButton").prop("disabled", true).removeClass("btn-danger").addClass("btn-secondary").css("background-color", "").css("border-color", "");
+            } else {
+                $("#stateMismatchAlert").addClass("d-none");
+                $("#payButton").prop("disabled", false).removeClass("btn-secondary").addClass("btn-danger").css("background-color", "#ff4757").css("border-color", "#ff4757");
+            }
+        }
+
+        function setPaymentMethod(method) {
+            $("#formPaymentMethod").val(method);
+        }
+
+        function selectUpiApp(appName) {
+            $(".upi-app-btn").removeClass("btn-dark text-white").addClass("btn-outline-secondary");
+            event.target.closest("button").classList.remove("btn-outline-secondary");
+            event.target.closest("button").classList.add("btn-dark", "text-white");
+            $("#formPaymentMethod").val("UPI - " + appName);
+        }
+
+        function verifyUpi() {
+            alert("UPI ID verified successfully! Payment is ready to be authorized.");
+        }
+
+        function executePaymentFlow() {
+            var selectedState = ($("#custStateSelect").val() || "").trim().toLowerCase();
+            if (restaurantState && selectedState !== restaurantState) {
+                alert("Inter-State Ordering Restricted:\nA customer located in " + $("#custStateSelect").val() + " cannot order food from " + "@Model.StoreName" + " located in " + "@Model.StoreState" + ".\n\nPlease select restaurants within your state.");
+                return;
+            }
+
+            // Copy customer inputs to hidden form fields
+            $("#formCustName").val($("#custNameInput").val());
+            $("#formCustPhone").val($("#custPhoneInput").val());
+            $("#formCustAddress").val($("#custAddressInput").val());
+            $("#formCustState").val($("#custStateSelect").val());
+
+            // Validate address
+            if (!$("#formCustAddress").val() || $("#formCustAddress").val().trim() === "") {
+                alert("Please provide a valid delivery address.");
+                return;
+            }
+
+            // Submit form to trigger order placement and dynamic receipt generation
+            $("#mainPaymentForm").submit();
+        }
+    </script>
+}

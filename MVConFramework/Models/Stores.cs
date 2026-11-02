@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -20,8 +20,7 @@ namespace MVConFramework.Models
         public string StoreType { get; set; }
 
         [Required(ErrorMessage = "Contact Number is required")]
-        [RegularExpression(@"^[0-9]{10}$",
-            ErrorMessage = "Enter valid 10 digit phone number")]
+        [RegularExpression(@"^[0-9]{10}$", ErrorMessage = "Enter valid 10 digit phone number")]
         public string ContactNumber { get; set; }
 
         [Required(ErrorMessage = "Email is required")]
@@ -38,9 +37,25 @@ namespace MVConFramework.Models
         [DataType(DataType.Date)]
         public DateTime OpeningDate { get; set; }
 
-        public bool IsActive { get; set; }
-
+        public bool IsActive { get; set; } = true;
 
         public List<Orders> Orders { get; set; }
+
+        // Food Delivery & Verification Extensions
+        public decimal Rating { get; set; } = 4.2m;
+        public int TotalOrdersCompleted { get; set; } = 0;
+        public bool IsVerified { get; set; } = true;
+        public string VerificationStatus { get; set; } = "Approved"; // Pending, Approved, Rejected
+        public string FssaiLicenseNo { get; set; }
+        public int HygieneScore { get; set; } = 90;
+        public bool WaterQualityCertified { get; set; } = true;
+        public bool PestControlCertified { get; set; } = true;
+        public DateTime? KitchenAuditDate { get; set; }
+        public string Address { get; set; }
+        public string Cuisine { get; set; } = "Multi-Cuisine";
+        public string ImageUrl { get; set; }
+        public int? UserId { get; set; }
+        public int MenuItemCount { get; set; }
+        public int ReviewCount { get; set; }
     }
 }

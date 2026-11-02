@@ -1,0 +1,253 @@
+@model MVConFramework.ViewModels.DeliveryAgentDashboardViewModel
+@{
+    ViewBag.Title = Model.Agent != null ? Model.Agent.FullName + " - Delivery Partner Dashboard" : "Delivery Partner Dashboard";
+}
+
+<div class="py-4">
+
+    <!-- Top Header & Agent Selector -->
+    <div class="card border-0 rounded-4 shadow-sm p-4 mb-4 bg-white">
+        <div class="row align-items-center">
+            <div class="col-md-7">
+                <span class="badge bg-success rounded-pill px-3 py-1 mb-2">
+                    <i class="fa-solid fa-motorcycle me-1"></i> Delivery Partner Fleet (10 Active Riders)
+                </span>
+                <h3 class="fw-extrabold text-dark mb-1">
+                    @(Model.Agent != null ? Model.Agent.FullName : "Delivery Partner")
+                </h3>
+                <p class="text-muted small mb-0">
+                    <i class="fa-solid fa-id-card text-success me-1"></i> Aadhaar: <strong class="text-dark">**** **** @(Model.Agent != null && Model.Agent.AadhaarNumber.Length >= 4 ? Model.Agent.AadhaarNumber.Substring(Model.Agent.AadhaarNumber.Length - 4) : "1234")</strong> (Verified) |
+                    <i class="fa-solid fa-van-shuttle me-1"></i> @(Model.Agent != null ? Model.Agent.VehicleNumber : "DL-01-AB-1234") (@(Model.Agent != null ? Model.Agent.VehicleType : "Motorcycle")) |
+                    <i class="fa-solid fa-location-dot me-1"></i> @(Model.Agent != null ? Model.Agent.City : "Delhi")
+                </p>
+            </div>
+
+            <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex flex-column align-items-md-end gap-2">
+                <!-- Agent Switcher -->
+                <div class="d-flex align-items-center gap-2">
+                    <label class="small text-muted text-nowrap">Switch Rider:</label>
+                    <select class="form-select form-select-sm rounded-pill border shadow-sm px-3" onchange="location.href='@Url.Action("Index", "DeliveryAgent")?agentId=' + this.value;">
+                        @if (ViewBag.AllAgents != null)
+                        {
+                            foreach (var a in (List<MVConFramework.Models.DeliveryAgent>)ViewBag.AllAgents)
+                            {
+                                <option value="@a.AgentId" @(Model.Agent != null && Model.Agent.AgentId == a.AgentId ? "selected" : "")>
+                                    🛵 @a.FullName (@a.City) - @(a.IsActive ? "Online" : "Offline")
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- Duty Toggle Form -->
+                @if (Model.Agent != null)
+                {
+                    using (Html.BeginForm("ToggleStatus", "DeliveryAgent", FormMethod.Post, new { @class = "d-inline" }))
+                    {
+                        <input type="hidden" name="agentId" value="@Model.Agent.AgentId" />
+                        <input type="hidden" name="isActive" value="@(!Model.Agent.IsActive ? "true" : "false")" />
+                        <button type="submit" class="btn @(Model.Agent.IsActive ? "btn-success" : "btn-secondary") btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                            <i class="fa-solid @(Model.Agent.IsActive ? "fa-toggle-on" : "fa-toggle-off") me-1 fs-6"></i>
+                            @(Model.Agent.IsActive ? "Status: Online (Active)" : "Status: Offline")
+                        </button>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Bar for Riders -->
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <a href="@Url.Action("Index", "DeliveryAgent", new { agentId = Model.Agent != null ? Model.Agent.AgentId : 1 })" class="btn btn-success rounded-pill px-4 py-2 fw-bold">
+            <i class="fa-solid fa-bell me-1"></i> My Active Trips (@Model.ActiveOrders.Count)
+        </a>
+        <a href="@Url.Action("Enroll", "DeliveryAgent")" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+            <i class="fa-solid fa-user-plus me-1"></i> Enroll New Rider (Aadhaar KYC)
+        </a>
+    </div>
+
+    <!-- Earnings & Performance Metrics -->
+    <div class="row g-3 mb-4">
+
+        <!-- Card 1: Today's Earnings -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Today's Earnings</span>
+                    <span class="p-2 bg-success bg-opacity-10 text-success rounded-3"><i class="fa-solid fa-coins"></i></span>
+                </div>
+                <h3 class="fw-extrabold text-success mb-1">&#8377;@Model.TodayEarnings.ToString("0")</h3>
+                <small class="text-muted">&#8377;60 per completed delivery</small>
+            </div>
+        </div>
+
+        <!-- Card 2: Total Lifetime Earnings -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Lifetime Earnings</span>
+                    <span class="p-2 bg-primary bg-opacity-10 text-primary rounded-3"><i class="fa-solid fa-wallet"></i></span>
+                </div>
+                <h3 class="fw-extrabold text-dark mb-1">&#8377;@Model.LifetimeEarnings.ToString("N0")</h3>
+                <small class="text-muted">Direct transfer to rider bank account</small>
+            </div>
+        </div>
+
+        <!-- Card 3: Deliveries Completed -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Deliveries Completed</span>
+                    <span class="p-2 bg-info bg-opacity-10 text-info rounded-3"><i class="fa-solid fa-box-check"></i></span>
+                </div>
+                <h3 class="fw-extrabold text-dark mb-1">@Model.TotalCompletedDeliveries</h3>
+                <small class="text-success fw-medium"><i class="fa-solid fa-shield-check"></i> 100% on-time record</small>
+            </div>
+        </div>
+
+        <!-- Card 4: Rider Rating -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="text-muted small fw-semibold text-uppercase">Rider Rating</span>
+                    <span class="p-2 bg-warning bg-opacity-10 text-warning rounded-3"><i class="fa-solid fa-star"></i></span>
+                </div>
+                <h3 class="fw-extrabold text-warning mb-1">
+                    <i class="fa-solid fa-star"></i> @(Model.Agent != null ? Model.Agent.Rating.ToString("0.0") : "4.9")
+                </h3>
+                <small class="text-muted">Top Rated Delivery Partner</small>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Active Deliveries Queue -->
+    <div class="card border-0 rounded-4 shadow-sm p-4 mb-4 bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h5 class="fw-bold mb-1"><i class="fa-solid fa-route text-success me-2"></i> Active Pickup & Delivery Queue</h5>
+                <p class="text-muted small mb-0">Assigned orders awaiting pickup from kitchen and delivery to customer doorstep.</p>
+            </div>
+            <span class="badge bg-success rounded-pill px-3 py-1">@Model.ActiveOrders.Count In-Progress</span>
+        </div>
+
+        @if (Model.ActiveOrders != null && Model.ActiveOrders.Count > 0)
+        {
+            <div class="row row-cols-1 row-cols-lg-2 g-3">
+                @foreach (var o in Model.ActiveOrders)
+                {
+                    <div class="col">
+                        <div class="card border rounded-4 p-4 shadow-sm h-100 bg-light">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <span class="badge bg-danger rounded-pill px-3 py-1 mb-1">Order #@o.OrderId</span>
+                                    <strong class="text-dark d-block">@o.ProductName (@o.Quantity items)</strong>
+                                </div>
+                                <span class="badge bg-success text-white px-3 py-2 rounded-pill fw-bold fs-6">
+                                    +&#8377;60 Earnings
+                                </span>
+                            </div>
+
+                            <!-- Pickup Info -->
+                            <div class="p-3 bg-white rounded-3 border mb-3">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <i class="fa-solid fa-store text-danger"></i>
+                                    <strong class="text-dark">Pickup from Restaurant:</strong>
+                                </div>
+                                <div class="fw-bold text-dark ps-4">@o.StoreName</div>
+                                <div class="text-muted small ps-4">@o.DeliveryCity | Kitchen Allotment: @o.PreparationTimeMinutes min</div>
+                            </div>
+
+                            <!-- Delivery Info -->
+                            <div class="p-3 bg-white rounded-3 border mb-3">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <i class="fa-solid fa-house text-success"></i>
+                                    <strong class="text-dark">Deliver to Customer:</strong>
+                                </div>
+                                <div class="fw-bold text-dark ps-4">@o.CustomerName</div>
+                                <div class="text-muted small ps-4">@o.DeliveryAddress, @o.DeliveryCity (Distance: @o.DistanceKm km)</div>
+                            </div>
+
+                            <!-- Action Button -->
+                            @using (Html.BeginForm("CompleteDelivery", "DeliveryAgent", FormMethod.Post, new { @class = "mt-auto" }))
+                            {
+                                <input type="hidden" name="orderId" value="@o.OrderId" />
+                                <input type="hidden" name="agentId" value="@(Model.Agent != null ? Model.Agent.AgentId : 1)" />
+                                <button type="submit" class="btn btn-success w-100 rounded-pill py-2 fw-bold shadow-sm">
+                                    <i class="fa-solid fa-circle-check me-2"></i> Mark Order Delivered (Credit &#8377;60)
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5 text-muted small">
+                <i class="fa-solid fa-mug-hot fs-3 d-block mb-2 text-secondary opacity-50"></i>
+                No active delivery tasks assigned to your queue right now.<br />
+                Stay Online — new food orders will be assigned to you as soon as kitchens finish packing.
+            </div>
+        }
+    </div>
+
+    <!-- Completed Deliveries Register -->
+    <div class="card border-0 rounded-4 shadow-sm overflow-hidden bg-white">
+        <div class="card-header bg-white border-bottom p-4">
+            <h5 class="fw-bold mb-0">Recent Completed Deliveries</h5>
+        </div>
+
+        @if (Model.CompletedDeliveries != null && Model.CompletedDeliveries.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr class="small text-muted text-uppercase">
+                            <th class="ps-4">Order ID & Date</th>
+                            <th>Pickup Restaurant</th>
+                            <th>Customer & Address</th>
+                            <th>Order Amount</th>
+                            <th>Rider Fee Credited</th>
+                            <th class="text-end pe-4">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model.CompletedDeliveries)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <strong class="text-dark d-block">#@c.OrderId</strong>
+                                    <span class="text-muted small">@c.OrderDate.ToString("dd MMM, hh:mm tt")</span>
+                                </td>
+                                <td>
+                                    <strong class="text-dark">@c.StoreName</strong>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-dark d-block">@c.CustomerName</span>
+                                    <small class="text-muted">@c.DeliveryAddress</small>
+                                </td>
+                                <td>
+                                    <span class="text-dark fw-bold">&#8377;@c.TotalAmount</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success rounded-pill px-3 py-1 fw-bold">+&#8377;60.00</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <span class="badge bg-light text-success border"><i class="fa-solid fa-check me-1"></i> Delivered</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-4 text-muted small">
+                No past deliveries recorded yet for this agent.
+            </div>
+        }
+    </div>
+
+</div>
