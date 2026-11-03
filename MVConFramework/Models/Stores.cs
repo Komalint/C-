@@ -54,6 +54,10 @@ namespace MVConFramework.Models
         public string Address { get; set; }
         public string Cuisine { get; set; } = "Multi-Cuisine";
         public string ImageUrl { get; set; }
+        public string BannerUrl { get; set; }
+        public string OpeningTime { get; set; } = "10:00 AM";
+        public string ClosingTime { get; set; } = "11:00 PM";
+        public string Description { get; set; }
         public int? UserId { get; set; }
         public int MenuItemCount { get; set; }
         public int ReviewCount { get; set; }

@@ -1,7 +1,12 @@
 @model MVConFramework.Models.RestaurantCertificate
 @{
     var store = (MVConFramework.Models.Stores)ViewBag.Store;
-    ViewBag.Title = "Certificate of Quality & Customer Trust";
+    bool isEligible = ViewBag.IsEligible != null && (bool)ViewBag.IsEligible && Model != null;
+    int ordersCompleted = store != null ? store.TotalOrdersCompleted : (Model != null ? Model.TotalOrdersAtIssue : 0);
+    decimal rating = store != null ? store.Rating : (Model != null ? Model.AverageRatingAtIssue : 0m);
+    int ordersRemaining = Math.Max(0, 200 - ordersCompleted);
+
+    ViewBag.Title = isEligible ? "Official Certificate of Customer Trust" : "Certificate Eligibility Status";
 }
 
 <style>
@@ -36,6 +41,14 @@
         margin: 0 auto;
     }
 
+    /* Ineligible Notice Card */
+    .ineligible-card {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+        border: 1px solid #fee2e2;
+    }
+
     @@media print {
         body * {
             visibility: hidden;
@@ -61,104 +74,245 @@
 <div class="py-4">
 
     <!-- Action Bar (Hidden on print) -->
-    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 no-print">
         <div>
             <h3 class="fw-extrabold text-dark mb-1">
                 <i class="fa-solid fa-award text-warning me-2"></i> Quality & Customer Trust Certificate
             </h3>
-            <p class="text-muted small mb-0">Awarded to food partners surpassing 200 completed orders with verified 3.5+ star customer ratings.</p>
+            <p class="text-muted small mb-0">Official accreditation for food partners achieving 200+ completed orders with verified 3.5+ star customer ratings.</p>
         </div>
 
-        <div class="d-flex gap-2">
-            <a href="@Url.Action("Index", "Restaurant", new { storeId = store != null ? store.StoreId : 1 })" class="btn btn-outline-secondary rounded-pill px-4">
+        <div class="d-flex flex-wrap gap-2">
+            <a href="@Url.Action("Index", "Restaurant")" class="btn btn-outline-secondary rounded-pill px-4">
                 <i class="fa-solid fa-arrow-left me-1"></i> Back to Kitchen
             </a>
-            <button type="button" class="btn btn-warning rounded-pill px-4 fw-bold shadow text-dark" onclick="window.print()">
-                <i class="fa-solid fa-download me-2"></i> Print / Download Certificate (PDF)
-            </button>
+
+            @if (isEligible)
+            {
+                <button type="button" class="btn btn-warning rounded-pill px-4 fw-bold shadow text-dark" onclick="window.print()">
+                    <i class="fa-solid fa-download me-2"></i> Print / Download Certificate (PDF)
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold text-white opacity-75" disabled title="Not eligible to download">
+                    <i class="fa-solid fa-lock me-2"></i> Download Disabled (Not Eligible)
+                </button>
+            }
         </div>
     </div>
 
-    <!-- The Certificate Document -->
-    <div class="row justify-content-center">
-        <div class="col-xl-11" id="printableCertificate">
+    @if (!isEligible)
+    {
+        <!-- ========================================== -->
+        <!-- NOT ELIGIBLE FOR CERTIFICATION SCREEN -->
+        <!-- ========================================== -->
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-9">
 
-            <div class="cert-frame">
-                <div class="cert-inner-border text-center">
-
-                    <!-- Top Emblem & Header -->
-                    <div class="mb-3">
-                        <div class="d-inline-flex align-items-center justify-content-center bg-dark text-warning rounded-circle p-3 mb-2" style="width: 60px; height: 60px;">
-                            <i class="fa-solid fa-utensils fs-3"></i>
-                        </div>
-                        <h6 class="text-uppercase tracking-wide fw-bold text-secondary mb-1" style="letter-spacing: 3px;">
-                            FoodExpress Standards & Quality Authority
-                        </h6>
-                        <h1 class="display-6 fw-extrabold text-dark text-uppercase mb-2" style="font-family: Georgia, serif; letter-spacing: 1px;">
-                            Certificate of Customer Trust & Hygiene
-                        </h1>
-                        <div class="text-warning fs-5 mb-4">
-                            ★ ★ ★ ★ ★
-                        </div>
+                <!-- Prominent Warning Banner -->
+                <div class="alert alert-danger border-0 rounded-4 p-4 shadow-sm mb-4 d-flex align-items-start gap-3" style="background-color: #fff1f2;">
+                    <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 54px; height: 54px;">
+                        <i class="fa-solid fa-lock fs-4"></i>
                     </div>
+                    <div>
+                        <h4 class="fw-bold text-danger mb-1">You Are Not Eligible for Certification</h4>
+                        <p class="text-dark mb-0" style="font-size: 0.98rem;">
+                            Your restaurant <strong>@(store != null ? store.StoreName : "This Restaurant")</strong> has not yet met the milestone criteria required to earn or download the official <strong>Certificate of Customer Trust & Food Quality</strong>.
+                        </p>
+                    </div>
+                </div>
 
-                    <!-- Citation Body -->
-                    <p class="lead text-muted mb-2 fst-italic">This honor is proudly awarded to:</p>
-                    <h2 class="display-5 fw-extrabold text-danger mb-1" style="font-family: Georgia, serif;">
-                        @(Model != null ? Model.StoreName : (store != null ? store.StoreName : "The Royal Biryani House"))
-                    </h2>
-                    <p class="fw-semibold text-dark mb-4">
-                        📍 @(Model != null ? Model.City : (store != null ? store.City : "Delhi")), India | Managed by: <strong>@(Model != null ? Model.OwnerName : (store != null ? store.OwnerName : "Chef Partner"))</strong>
+                <!-- Milestone Evaluation Card -->
+                <div class="ineligible-card p-4 p-md-5 mb-4">
+                    <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-clipboard-check text-primary"></i> Qualification Requirements Evaluation
+                    </h5>
+                    <p class="text-muted small mb-4">
+                        To maintain standard consumer trust and food hygiene integrity across FoodExpress, certificates are strictly issued only when both criteria below are satisfied:
                     </p>
 
-                    <div class="mx-auto my-4 text-dark" style="max-width: 720px; font-size: 1.05rem; line-height: 1.7;">
-                        In official recognition of successfully achieving and surpassing <strong>200+ completed food orders</strong> with an outstanding verified customer satisfaction rating of <strong>@(Model != null ? Model.AverageRatingAtIssue.ToString("0.0") : (store != null ? store.Rating.ToString("0.0") : "4.6")) / 5.0 Stars</strong>, while maintaining 100% adherence to <strong>FSSAI Food Safety and Kitchen Hygiene Standards</strong>.
-                    </div>
+                    <div class="row g-4 mb-4">
+                        <!-- Requirement 1: 200 Orders -->
+                        <div class="col-md-6">
+                            <div class="card h-100 border rounded-4 p-4 @(ordersCompleted >= 200 ? "border-success bg-success bg-opacity-10" : "border-danger bg-danger bg-opacity-10")">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="fw-bold text-dark">
+                                        <i class="fa-solid fa-bag-shopping me-2 @(ordersCompleted >= 200 ? "text-success" : "text-danger")"></i>
+                                        Completed Orders Milestone
+                                    </span>
+                                    @if (ordersCompleted >= 200)
+                                    {
+                                        <span class="badge bg-success rounded-pill px-3 py-1"><i class="fa-solid fa-check me-1"></i> Qualified</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger rounded-pill px-3 py-1"><i class="fa-solid fa-xmark me-1"></i> Not Met</span>
+                                    }
+                                </div>
+                                
+                                <div class="display-6 fw-extrabold mb-1 @(ordersCompleted >= 200 ? "text-success" : "text-danger")">
+                                    @ordersCompleted <span class="fs-6 fw-normal text-muted">/ 200 Required</span>
+                                </div>
 
-                    <!-- Seal & Verification Grid -->
-                    <div class="row align-items-center my-4 py-3 border-top border-bottom border-warning">
-                        <div class="col-md-4 text-center text-md-start mb-3 mb-md-0">
-                            <small class="text-muted text-uppercase d-block" style="font-size: 0.75rem;">Certificate Identification</small>
-                            <strong class="text-dark">@(Model != null ? Model.CertificateNumber : "CERT-TRUST-DEL-21501")</strong>
-                            <div class="text-muted small">Issue Date: @(Model != null ? Model.IssuedDate.ToString("dd MMMM yyyy") : DateTime.Now.ToString("dd MMMM yyyy"))</div>
-                        </div>
+                                <div class="progress rounded-pill mb-2" style="height: 10px;">
+                                    <div class="progress-bar @(ordersCompleted >= 200 ? "bg-success" : "bg-danger")" role="progressbar" style="width: @Math.Min(100, (ordersCompleted * 100) / 200)%;"></div>
+                                </div>
 
-                        <!-- Golden Seal Ribbon -->
-                        <div class="col-md-4 text-center mb-3 mb-md-0">
-                            <div class="cert-seal">
-                                <i class="fa-solid fa-shield-halved fs-3 mb-1"></i>
-                                <span style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">100% VERIFIED<br />TRUSTED</span>
+                                <div class="small text-muted">
+                                    @if (ordersCompleted >= 200)
+                                    {
+                                        <span class="text-success fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> Completed requirement fulfilled!</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger fw-semibold"><i class="fa-solid fa-circle-exclamation me-1"></i> Need <strong>@ordersRemaining</strong> more completed orders.</span>
+                                    }
+                                </div>
                             </div>
                         </div>
 
-                        <div class="col-md-4 text-center text-md-end">
-                            <small class="text-muted text-uppercase d-block" style="font-size: 0.75rem;">FSSAI & Hygiene Benchmark</small>
-                            <strong class="text-success">FSSAI Lic: @(Model != null ? Model.FssaiLicenseNo : (store != null ? store.FssaiLicenseNo : "FSSAI-10022021000101"))</strong>
-                            <div class="text-muted small">Hygiene Score: <strong>@(Model != null ? Model.HygieneScore : (store != null ? store.HygieneScore : 95)) / 100</strong></div>
+                        <!-- Requirement 2: Rating >= 3.5 -->
+                        <div class="col-md-6">
+                            <div class="card h-100 border rounded-4 p-4 @(rating >= 3.5m ? "border-success bg-success bg-opacity-10" : "border-danger bg-danger bg-opacity-10")">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="fw-bold text-dark">
+                                        <i class="fa-solid fa-star me-2 @(rating >= 3.5m ? "text-success" : "text-danger")"></i>
+                                        Customer Review Rating
+                                    </span>
+                                    @if (rating >= 3.5m)
+                                    {
+                                        <span class="badge bg-success rounded-pill px-3 py-1"><i class="fa-solid fa-check me-1"></i> Qualified</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger rounded-pill px-3 py-1"><i class="fa-solid fa-xmark me-1"></i> Not Met</span>
+                                    }
+                                </div>
+
+                                <div class="display-6 fw-extrabold mb-1 @(rating >= 3.5m ? "text-success" : "text-danger")">
+                                    @rating.ToString("0.0") <span class="fs-6 fw-normal text-muted">/ 3.5★ Required</span>
+                                </div>
+
+                                <div class="progress rounded-pill mb-2" style="height: 10px;">
+                                    <div class="progress-bar @(rating >= 3.5m ? "bg-success" : "bg-danger")" role="progressbar" style="width: @Math.Min(100, (int)(rating * 20))%;"></div>
+                                </div>
+
+                                <div class="small text-muted">
+                                    @if (rating >= 3.5m)
+                                    {
+                                        <span class="text-success fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> Rating requirement fulfilled (@rating.ToString("0.0")★)!</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger fw-semibold"><i class="fa-solid fa-circle-exclamation me-1"></i> Current rating (@rating.ToString("0.0")★) is below 3.5★.</span>
+                                    }
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Signatures -->
-                    <div class="row pt-4 justify-content-between text-center">
-                        <div class="col-4">
-                            <div class="border-bottom border-dark pb-1 mx-auto" style="max-width: 180px;">
-                                <span style="font-family: 'Brush Script MT', cursive; font-size: 1.5rem; color: #1e1b4b;">Dr. A. Sharma</span>
-                            </div>
-                            <small class="text-muted d-block mt-1">Chief Food Safety Auditor</small>
-                        </div>
-
-                        <div class="col-4">
-                            <div class="border-bottom border-dark pb-1 mx-auto" style="max-width: 180px;">
-                                <span style="font-family: 'Brush Script MT', cursive; font-size: 1.5rem; color: #1e1b4b;">Komal Gupta</span>
-                            </div>
-                            <small class="text-muted d-block mt-1">Platform Operations Director</small>
-                        </div>
+                    <!-- Guidance & Next Steps -->
+                    <div class="p-4 rounded-4 bg-light border text-center">
+                        <i class="fa-solid fa-lightbulb text-warning fs-2 mb-2"></i>
+                        <h6 class="fw-bold text-dark mb-1">How to Unlock Your Trust Certificate</h6>
+                        <p class="text-muted small mb-3" style="max-width: 600px; margin: 0 auto;">
+                            Keep fulfilling customer orders quickly and maintaining high kitchen hygiene. Once you hit <strong>200 orders</strong> with at least <strong>3.5★</strong> rating, this certificate will unlock immediately for download and framing.
+                        </p>
+                        <a href="@Url.Action("Index", "Restaurant")" class="btn btn-danger rounded-pill px-4 fw-semibold" style="background-color: #ff4757; border-color: #ff4757;">
+                            <i class="fa-solid fa-arrow-left me-1"></i> Return to Kitchen Orders
+                        </a>
                     </div>
-
                 </div>
-            </div>
 
+            </div>
         </div>
-    </div>
+    }
+    else
+    {
+        <!-- ========================================== -->
+        <!-- ELIGIBLE: THE OFFICIAL CERTIFICATE -->
+        <!-- ========================================== -->
+        <div class="row justify-content-center">
+            <div class="col-xl-11" id="printableCertificate">
+
+                <div class="cert-frame">
+                    <div class="cert-inner-border text-center">
+
+                        <!-- Top Emblem & Header -->
+                        <div class="mb-3">
+                            <div class="d-inline-flex align-items-center justify-content-center bg-dark text-warning rounded-circle p-3 mb-2" style="width: 60px; height: 60px;">
+                                <i class="fa-solid fa-utensils fs-3"></i>
+                            </div>
+                            <h6 class="text-uppercase tracking-wide fw-bold text-secondary mb-1" style="letter-spacing: 3px;">
+                                FoodExpress Standards & Quality Authority
+                            </h6>
+                            <h1 class="display-6 fw-extrabold text-dark text-uppercase mb-2" style="font-family: Georgia, serif; letter-spacing: 1px;">
+                                Certificate of Customer Trust & Hygiene
+                            </h1>
+                            <div class="text-warning fs-5 mb-4">
+                                ★ ★ ★ ★ ★
+                            </div>
+                        </div>
+
+                        <!-- Citation Body -->
+                        <p class="lead text-muted mb-2 fst-italic">This honor is proudly awarded to:</p>
+                        <h2 class="display-5 fw-extrabold text-danger mb-1" style="font-family: Georgia, serif;">
+                            @(Model != null ? Model.StoreName : store.StoreName)
+                        </h2>
+                        <p class="fw-semibold text-dark mb-4">
+                            📍 @(Model != null ? Model.City : store.City), India | Managed by: <strong>@(Model != null ? Model.OwnerName : store.OwnerName)</strong>
+                        </p>
+
+                        <div class="mx-auto my-4 text-dark" style="max-width: 720px; font-size: 1.05rem; line-height: 1.7;">
+                            In official recognition of successfully achieving and surpassing <strong>200+ completed food orders</strong> with an outstanding verified customer satisfaction rating of <strong>@(Model != null ? Model.AverageRatingAtIssue.ToString("0.0") : store.Rating.ToString("0.0")) / 5.0 Stars</strong>, while maintaining 100% adherence to <strong>FSSAI Food Safety and Kitchen Hygiene Standards</strong>.
+                        </div>
+
+                        <!-- Seal & Verification Grid -->
+                        <div class="row align-items-center my-4 py-3 border-top border-bottom border-warning">
+                            <div class="col-md-4 text-center text-md-start mb-3 mb-md-0">
+                                <small class="text-muted text-uppercase d-block" style="font-size: 0.75rem;">Certificate Identification</small>
+                                <strong class="text-dark">@(Model != null ? Model.CertificateNumber : "CERT-TRUST-" + store.StoreId)</strong>
+                                <div class="text-muted small">Issue Date: @(Model != null ? Model.IssuedDate.ToString("dd MMMM yyyy") : DateTime.Now.ToString("dd MMMM yyyy"))</div>
+                            </div>
+
+                            <!-- Golden Seal Ribbon -->
+                            <div class="col-md-4 text-center mb-3 mb-md-0">
+                                <div class="cert-seal">
+                                    <i class="fa-solid fa-shield-halved fs-3 mb-1"></i>
+                                    <span style="font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">100% VERIFIED<br />TRUSTED</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 text-center text-md-end">
+                                <small class="text-muted text-uppercase d-block" style="font-size: 0.75rem;">FSSAI & Hygiene Benchmark</small>
+                                <strong class="text-success">FSSAI Lic: @(Model != null ? Model.FssaiLicenseNo : store.FssaiLicenseNo)</strong>
+                                <div class="text-muted small">Hygiene Score: <strong>@(Model != null ? Model.HygieneScore : store.HygieneScore) / 100</strong></div>
+                            </div>
+                        </div>
+
+                        <!-- Signatures -->
+                        <div class="row pt-4 justify-content-between text-center">
+                            <div class="col-4">
+                                <div class="border-bottom border-dark pb-1 mx-auto" style="max-width: 180px;">
+                                    <span style="font-family: 'Brush Script MT', cursive; font-size: 1.5rem; color: #1e1b4b;">Dr. A. Sharma</span>
+                                </div>
+                                <small class="text-muted d-block mt-1">Chief Food Safety Auditor</small>
+                            </div>
+
+                            <div class="col-4">
+                                <div class="border-bottom border-dark pb-1 mx-auto" style="max-width: 180px;">
+                                    <span style="font-family: 'Brush Script MT', cursive; font-size: 1.5rem; color: #1e1b4b;">Komal Gupta</span>
+                                </div>
+                                <small class="text-muted d-block mt-1">Platform Operations Director</small>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    }
 
 </div>

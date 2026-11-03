@@ -1,0 +1,196 @@
+@model MVConFramework.Models.Stores
+
+@{
+    ViewBag.Title = "Application Under Super Admin Review - FoodExpress";
+}
+
+<div class="py-5" style="background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); min-height: 85vh;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
+
+                <!-- Status Card -->
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white mb-4">
+                    
+                    <!-- Header -->
+                    <div class="card-header border-0 py-4 px-4 px-md-5 text-white" style="background: linear-gradient(135deg, #b45309 0%, #d97706 100%);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="badge bg-black bg-opacity-25 rounded-pill px-3 py-1 mb-2 fw-semibold text-uppercase" style="font-size: 0.72rem;">
+                                    <i class="fa-solid fa-hourglass-half me-1"></i> Kitchen Verification Status
+                                </span>
+                                <h3 class="fw-bold mb-1">Authorization Pending</h3>
+                                <p class="text-white-50 small mb-0">Application is currently under review by Super Admin.</p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-white text-dark rounded-pill px-3 py-2 fw-bold shadow-sm" id="badgeStatusText">
+                                    <i class="fa-solid fa-clock text-warning me-1"></i> @(Model != null ? Model.VerificationStatus : "PendingApproval")
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4 p-md-5">
+
+                        <!-- Alert Box -->
+                        <div class="alert alert-warning border-0 rounded-4 p-4 mb-4 shadow-sm" style="background-color: #fffbeb; border-left: 5px solid #f59e0b !important;">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning text-dark" style="width: 44px; height: 44px;">
+                                        <i class="fa-solid fa-shield-halved fs-5"></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <h5 class="fw-bold text-dark mb-1">Super Admin Approval in Progress</h5>
+                                    <p class="text-secondary small mb-0 leading-relaxed">
+                                        Your kitchen <strong>@(Model != null ? Model.StoreName : "Your Kitchen")</strong> in <strong>@(Model != null ? Model.City : "Delhi")</strong> has been registered. 
+                                        In compliance with platform food safety and kitchen hygiene regulations, every new restaurant partner must be confirmed and authorized by the Super Admin before opening for orders.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stepper Progress -->
+                        <div class="card border rounded-4 p-4 mb-4 bg-light">
+                            <h6 class="fw-bold text-dark mb-3">Onboarding Progress</h6>
+                            <div class="row text-center g-3">
+                                <div class="col-4">
+                                    <div class="rounded-circle bg-success text-white mx-auto mb-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <small class="fw-bold text-dark d-block">1. Enrolled</small>
+                                    <span class="text-muted" style="font-size: 0.72rem;">Account Created</span>
+                                </div>
+
+                                <div class="col-4">
+                                    <div class="rounded-circle bg-warning text-dark mx-auto mb-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px; animation: pulse 2s infinite;">
+                                        <i class="fa-solid fa-hourglass-half"></i>
+                                    </div>
+                                    <small class="fw-bold text-warning d-block">2. Authorization</small>
+                                    <span class="text-muted" style="font-size: 0.72rem;">Super Admin Audit</span>
+                                </div>
+
+                                <div class="col-4">
+                                    <div class="rounded-circle bg-secondary bg-opacity-25 text-muted mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                                        <i class="fa-solid fa-lock"></i>
+                                    </div>
+                                    <small class="fw-semibold text-muted d-block">3. Live Dashboard</small>
+                                    <span class="text-muted" style="font-size: 0.72rem;">Unlocked on Approval</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Store Application Summary -->
+                        <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                            <i class="fa-solid fa-file-invoice text-primary me-2"></i>Application Details
+                        </h6>
+
+                        @if (Model != null)
+                        {
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Restaurant Name</small>
+                                    <span class="fw-bold text-dark">@Model.StoreName</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Owner / Applicant</small>
+                                    <span class="fw-semibold text-dark">@Model.OwnerName</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Operating Region</small>
+                                    <span class="badge bg-light text-dark border">📍 @Model.City, @Model.State</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Cuisine</small>
+                                    <span class="fw-semibold text-dark">@Model.Cuisine</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">FSSAI Status</small>
+                                    <span class="text-dark">@(string.IsNullOrEmpty(Model.FssaiLicenseNo) ? "Pending Submission after Approval" : Model.FssaiLicenseNo)</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Physical Kitchen Address</small>
+                                    <span class="text-muted small">@(string.IsNullOrEmpty(Model.Address) ? "Address pending" : Model.Address)</span>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex flex-wrap gap-2 pt-2 border-top align-items-center justify-content-between">
+                            <button type="button" class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-dark shadow-sm" id="btnCheckStatus" onclick="checkStatusManual()">
+                                <i class="fa-solid fa-arrows-rotate me-1" id="iconRefresh"></i> Check Approval Status
+                            </button>
+
+                            <a href="@Url.Action("Logout", "Account")" class="btn btn-outline-danger rounded-pill px-4 py-2 fw-semibold">
+                                <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+                            </a>
+                        </div>
+
+                        <!-- Auto-polling notification badge -->
+                        <div class="text-center mt-3">
+                            <small class="text-muted" style="font-size: 0.75rem;" id="pollNotice">
+                                <i class="fa-solid fa-circle-dot text-success me-1 animate-pulse"></i> Auto-checking for Super Admin approval every 5 seconds...
+                            </small>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @@keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.08); }
+    }
+</style>
+
+@section scripts {
+    <script>
+        function checkStatusManual() {
+            const icon = $("#iconRefresh");
+            icon.addClass("fa-spin");
+
+            $.ajax({
+                url: '@Url.Action("CheckApprovalStatus", "Restaurant")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (res) {
+                    icon.removeClass("fa-spin");
+                    if (res && res.isApproved) {
+                        handleApproved();
+                    } else {
+                        $("#badgeStatusText").html('<i class="fa-solid fa-clock text-warning me-1"></i> ' + (res.status || 'PendingApproval'));
+                    }
+                },
+                error: function () {
+                    icon.removeClass("fa-spin");
+                }
+            });
+        }
+
+        function handleApproved() {
+            $("#pollNotice").html('<span class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i> Approved by Super Admin! Redirecting to Kitchen Dashboard...</span>');
+            setTimeout(function () {
+                window.location.href = '@Url.Action("Index", "Restaurant")';
+            }, 1500);
+        }
+
+        // Auto-poll every 5 seconds
+        setInterval(function () {
+            $.ajax({
+                url: '@Url.Action("CheckApprovalStatus", "Restaurant")',
+                type: 'GET',
+                dataType: 'json',
+                success: function (res) {
+                    if (res && res.isApproved) {
+                        handleApproved();
+                    }
+                }
+            });
+        }, 5000);
+    </script>
+}

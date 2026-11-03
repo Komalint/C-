@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -544,6 +545,9 @@ namespace MVConFramework.Models
                 }
             }
 
+            int actualCompleted = vm.LiveOrders.Count(o => o.OrderStatus.Equals("Delivered", StringComparison.OrdinalIgnoreCase));
+            vm.CompletedOrders = Math.Max(vm.CompletedOrders, Math.Max(vm.Store.TotalOrdersCompleted, actualCompleted));
+
             vm.MenuItems = GetMenuItems(storeId);
             vm.Reviews = GetReviewsByStore(storeId);
             vm.Certificate = GetRestaurantCertificate(storeId);
@@ -771,7 +775,7 @@ namespace MVConFramework.Models
                                     ReviewCount = Convert.ToInt32(dr["ReviewCount"])
                                 };
                                 vm.AllRestaurants.Add(r);
-                                if (!r.IsVerified || r.VerificationStatus == "Pending")
+                                if (!r.IsVerified || !r.VerificationStatus.Equals("Approved", StringComparison.OrdinalIgnoreCase))
                                 {
                                     vm.PendingKitchens.Add(r);
                                 }
@@ -1026,6 +1030,21 @@ namespace MVConFramework.Models
                     }
                 }
             }
+
+            // Guard: Never show certificate notifications if restaurant has not achieved 200 orders + 3.5+ rating
+            if (role.Equals("Restaurant", StringComparison.OrdinalIgnoreCase) && storeId.HasValue && storeId.Value > 0)
+            {
+                var store = GetStoreById(storeId.Value);
+                if (store != null)
+                {
+                    bool isEligible = store.TotalOrdersCompleted >= 200 && store.Rating >= 3.5m;
+                    if (!isEligible)
+                    {
+                        list = list.Where(n => !n.Title.Contains("Certificate") && !n.Message.Contains("Certificate")).ToList();
+                    }
+                }
+            }
+
             return list;
         }
 
@@ -1189,6 +1208,217 @@ namespace MVConFramework.Models
                 }
             }
             return list;
+        }
+
+
+        // Helper: Get Store By Owner UserId (Multi-Tenancy Binding)
+        public Stores GetStoreByOwnerUserId(int userId)
+        {
+            using (var con = new SqlConnection(_cnStr))
+            {
+                string sql = "SELECT TOP 1 StoreId FROM hra.Stores WHERE UserId = @UserId";
+                using (var cmd = new SqlCommand(sql, con))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    con.Open();
+                    var res = cmd.ExecuteScalar();
+                    if (res != null && res != DBNull.Value)
+                    {
+                        return GetStoreById(Convert.ToInt32(res));
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Update Store Profile & Operating Timings
+        public bool UpdateStoreProfile(Stores store)
+        {
+            using (var con = new SqlConnection(_cnStr))
+            {
+                string sql = @"
+                    UPDATE hra.Stores
+                    SET StoreName = @StoreName,
+                        OwnerName = @OwnerName,
+                        StoreType = @StoreType,
+                        ContactNumber = @ContactNumber,
+                        Email = @Email,
+                        Address = @Address,
+                        City = @City,
+                        State = @State,
+                        Cuisine = @Cuisine,
+                        OpeningTime = @OpeningTime,
+                        ClosingTime = @ClosingTime,
+                        BannerUrl = @BannerUrl,
+                        ImageUrl = @ImageUrl,
+                        Description = @Description
+                    WHERE StoreId = @StoreId";
+                using (var cmd = new SqlCommand(sql, con))
+                {
+                    cmd.Parameters.AddWithValue("@StoreId", store.StoreId);
+                    cmd.Parameters.AddWithValue("@StoreName", store.StoreName ?? "");
+                    cmd.Parameters.AddWithValue("@OwnerName", store.OwnerName ?? "");
+                    cmd.Parameters.AddWithValue("@StoreType", store.StoreType ?? "Restaurant");
+                    cmd.Parameters.AddWithValue("@ContactNumber", store.ContactNumber ?? "");
+                    cmd.Parameters.AddWithValue("@Email", store.Email ?? "");
+                    cmd.Parameters.AddWithValue("@Address", store.Address ?? "");
+                    cmd.Parameters.AddWithValue("@City", store.City ?? "");
+                    cmd.Parameters.AddWithValue("@State", store.State ?? "");
+                    cmd.Parameters.AddWithValue("@Cuisine", store.Cuisine ?? "Multi-Cuisine");
+                    cmd.Parameters.AddWithValue("@OpeningTime", !string.IsNullOrWhiteSpace(store.OpeningTime) ? store.OpeningTime : "10:00 AM");
+                    cmd.Parameters.AddWithValue("@ClosingTime", !string.IsNullOrWhiteSpace(store.ClosingTime) ? store.ClosingTime : "11:00 PM");
+                    cmd.Parameters.AddWithValue("@BannerUrl", !string.IsNullOrWhiteSpace(store.BannerUrl) ? (object)store.BannerUrl : DBNull.Value);
+                    cmd.Parameters.AddWithValue("@ImageUrl", !string.IsNullOrWhiteSpace(store.ImageUrl) ? (object)store.ImageUrl : DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Description", !string.IsNullOrWhiteSpace(store.Description) ? (object)store.Description : DBNull.Value);
+
+                    con.Open();
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        // Mark All Notifications as Read
+        public bool MarkAllNotificationsRead(string role, int? storeId, int? userId)
+        {
+            using (var con = new SqlConnection(_cnStr))
+            {
+                string sql = "UPDATE hra.Notifications SET IsRead = 1 WHERE RecipientRole = @Role";
+                if (storeId.HasValue && storeId.Value > 0)
+                {
+                    sql += " AND StoreId = @StoreId";
+                }
+                if (userId.HasValue && userId.Value > 0)
+                {
+                    sql += " AND (RecipientUserId = @UserId OR RecipientUserId IS NULL)";
+                }
+                using (var cmd = new SqlCommand(sql, con))
+                {
+                    cmd.Parameters.AddWithValue("@Role", role ?? "Customer");
+                    if (storeId.HasValue && storeId.Value > 0)
+                        cmd.Parameters.AddWithValue("@StoreId", storeId.Value);
+                    if (userId.HasValue && userId.Value > 0)
+                        cmd.Parameters.AddWithValue("@UserId", userId.Value);
+
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                    return true;
+                }
+            }
+        }
+
+        // Register Restaurant Store (Linked to User, Pending Super Admin Authorization)
+        public bool RegisterRestaurantStore(int userId, RegisterViewModel model, out int newStoreId, out string message)
+        {
+            newStoreId = 0;
+            message = string.Empty;
+            try
+            {
+                using (var con = new SqlConnection(_cnStr))
+                {
+                    using (var cmd = new SqlCommand("hra.usp_RegisterRestaurantStore", con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("@UserId", userId);
+                        cmd.Parameters.AddWithValue("@StoreName", string.IsNullOrWhiteSpace(model.RestaurantName) ? model.UserName + "'s Kitchen" : model.RestaurantName.Trim());
+                        cmd.Parameters.AddWithValue("@OwnerName", model.UserName.Trim());
+                        cmd.Parameters.AddWithValue("@StoreType", string.IsNullOrWhiteSpace(model.StoreType) ? "Restaurant" : model.StoreType.Trim());
+                        cmd.Parameters.AddWithValue("@ContactNumber", string.IsNullOrWhiteSpace(model.PhoneNumber) ? (object)DBNull.Value : model.PhoneNumber.Trim());
+                        cmd.Parameters.AddWithValue("@Email", model.Email.Trim());
+                        cmd.Parameters.AddWithValue("@City", string.IsNullOrWhiteSpace(model.City) ? "Delhi" : model.City.Trim());
+                        cmd.Parameters.AddWithValue("@State", string.IsNullOrWhiteSpace(model.State) ? "Delhi" : model.State.Trim());
+                        cmd.Parameters.AddWithValue("@Address", string.IsNullOrWhiteSpace(model.RestaurantAddress) ? "Kitchen address pending update" : model.RestaurantAddress.Trim());
+                        cmd.Parameters.AddWithValue("@Cuisine", string.IsNullOrWhiteSpace(model.Cuisine) ? "Multi-Cuisine" : model.Cuisine.Trim());
+                        cmd.Parameters.AddWithValue("@FssaiLicenseNo", string.IsNullOrWhiteSpace(model.FssaiLicenseNo) ? (object)DBNull.Value : model.FssaiLicenseNo.Trim());
+
+                        var pNewStoreId = new SqlParameter("@NewStoreId", SqlDbType.Int) { Direction = ParameterDirection.Output };
+                        cmd.Parameters.Add(pNewStoreId);
+
+                        con.Open();
+                        cmd.ExecuteNonQuery();
+
+                        if (pNewStoreId.Value != DBNull.Value)
+                        {
+                            newStoreId = Convert.ToInt32(pNewStoreId.Value);
+                            message = "Restaurant application submitted successfully! It is now pending Super Admin authorization.";
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                message = ex.Message;
+            }
+            return false;
+        }
+
+        // Register Delivery Agent / Rider (Linked to User)
+        public bool RegisterDeliveryAgent(int userId, RegisterViewModel model, out int newAgentId, out string message)
+        {
+            newAgentId = 0;
+            message = string.Empty;
+            try
+            {
+                using (var con = new SqlConnection(_cnStr))
+                {
+                    using (var cmd = new SqlCommand("hra.usp_RegisterDeliveryAgent", con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("@UserId", userId);
+                        cmd.Parameters.AddWithValue("@FullName", model.UserName.Trim());
+                        cmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber.Trim());
+                        cmd.Parameters.AddWithValue("@Email", model.Email.Trim());
+                        cmd.Parameters.AddWithValue("@City", string.IsNullOrWhiteSpace(model.City) ? "Delhi" : model.City.Trim());
+                        cmd.Parameters.AddWithValue("@State", string.IsNullOrWhiteSpace(model.State) ? "Delhi" : model.State.Trim());
+                        cmd.Parameters.AddWithValue("@VehicleType", string.IsNullOrWhiteSpace(model.VehicleType) ? "Motorcycle" : model.VehicleType.Trim());
+                        cmd.Parameters.AddWithValue("@VehicleNumber", string.IsNullOrWhiteSpace(model.VehicleNumber) ? (object)DBNull.Value : model.VehicleNumber.Trim());
+                        cmd.Parameters.AddWithValue("@AadhaarNumber", string.IsNullOrWhiteSpace(model.AadhaarNumber) ? (object)DBNull.Value : model.AadhaarNumber.Trim());
+
+                        var pNewAgentId = new SqlParameter("@NewAgentId", SqlDbType.Int) { Direction = ParameterDirection.Output };
+                        cmd.Parameters.Add(pNewAgentId);
+
+                        con.Open();
+                        cmd.ExecuteNonQuery();
+
+                        if (pNewAgentId.Value != DBNull.Value)
+                        {
+                            newAgentId = Convert.ToInt32(pNewAgentId.Value);
+                            message = "Delivery Partner registration completed successfully!";
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                message = ex.Message;
+            }
+            return false;
+        }
+
+        // Quick Authorize / Approve Store by Super Admin
+        public bool QuickAuthorizeStore(int storeId, string action, int adminUserId)
+        {
+            try
+            {
+                using (var con = new SqlConnection(_cnStr))
+                {
+                    using (var cmd = new SqlCommand("hra.usp_QuickAuthorizeRestaurant", con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("@StoreId", storeId);
+                        cmd.Parameters.AddWithValue("@Action", action ?? "Approve");
+                        cmd.Parameters.AddWithValue("@AdminUserId", adminUserId);
+
+                        con.Open();
+                        return cmd.ExecuteNonQuery() > 0;
+                    }
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

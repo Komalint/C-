@@ -1,75 +1,201 @@
 @model MVConFramework.ViewModels.RestaurantDashboardViewModel
 @{
-    ViewBag.Title = Model.Store != null ? Model.Store.StoreName + " - Kitchen Dashboard" : "Restaurant Partner Dashboard";
+    ViewBag.Title = Model.Store != null ? Model.Store.StoreName + " - Kitchen Dashboard" : "Restaurant Kitchen Dashboard";
+    int incomingOrdersCount = Model.LiveOrders != null ? Model.LiveOrders.Count(o => o.OrderStatus == "Placed" || o.OrderStatus == "Preparing") : 0;
+    int readyOrdersCount = Model.LiveOrders != null ? Model.LiveOrders.Count(o => o.OrderStatus == "ReadyForPickup" || o.OrderStatus == "OutForDelivery") : 0;
+    int completedOrdersCount = Model.LiveOrders != null ? Model.LiveOrders.Count(o => o.OrderStatus == "Delivered") : 0;
+    int maxInitialOrderId = Model.LiveOrders != null && Model.LiveOrders.Any() ? Model.LiveOrders.Max(o => o.OrderId) : 0;
 }
 
 <div class="py-4">
 
-    <!-- Top Header & Store Selector -->
+    <!-- Top Header (Multi-Tenant: Strictly Bound to Current Restaurant) -->
     <div class="card border-0 rounded-4 shadow-sm p-4 mb-4 bg-white">
         <div class="row align-items-center">
-            <div class="col-md-7">
-                <span class="badge bg-danger rounded-pill px-3 py-1 mb-2" style="background-color: #ff4757 !important;">
-                    <i class="fa-solid fa-kitchen-set me-1"></i> Kitchen & Orders Dashboard
-                </span>
-                <h3 class="fw-extrabold text-dark mb-1">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-danger rounded-pill px-3 py-1 fw-bold" style="background-color: #ff4757 !important;">
+                        <i class="fa-solid fa-kitchen-set me-1"></i> Dedicated Kitchen Dashboard
+                    </span>
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-1 small fw-semibold">
+                        <i class="fa-solid fa-circle-check me-1"></i> Kitchen Station Online
+                    </span>
+                    <span class="badge bg-light text-secondary border rounded-pill px-2 py-1 small" id="livePollingIndicator">
+                        <i class="fa-solid fa-satellite-dish text-success me-1"></i> Live Real-Time Polling Active
+                    </span>
+                </div>
+                <h2 class="fw-extrabold text-dark mb-1">
                     @(Model.Store != null ? Model.Store.StoreName : "Restaurant Kitchen")
-                </h3>
+                </h2>
                 <p class="text-muted small mb-0">
-                    <i class="fa-solid fa-location-dot me-1"></i> @(Model.Store != null ? Model.Store.City : "") |
-                    <i class="fa-solid fa-shield-halved text-success me-1"></i> FSSAI: @(Model.Store != null ? Model.Store.FssaiLicenseNo : "") (Hygiene: @(Model.Store != null ? Model.Store.HygieneScore : 90)/100)
+                    <i class="fa-solid fa-location-dot text-danger me-1"></i> @(Model.Store != null ? Model.Store.Address + ", " + Model.Store.City + " (" + Model.Store.State + ")" : "") &bull;
+                    <i class="fa-solid fa-shield-halved text-success ms-1 me-1"></i> FSSAI: <strong>@(Model.Store != null ? Model.Store.FssaiLicenseNo : "FSSAI-VERIFIED")</strong> &bull;
+                    <i class="fa-solid fa-hand-sparkles text-info ms-1 me-1"></i> Hygiene Audit: <strong>@(Model.Store != null ? Model.Store.HygieneScore : 95)/100</strong> &bull;
+                    <i class="fa-solid fa-star text-warning ms-1 me-1"></i> <strong>@(Model.Store != null ? Model.Store.Rating.ToString("0.0") : "4.8")★</strong>
                 </p>
             </div>
 
-            <!-- Restaurant Selector Dropdown -->
-            <div class="col-md-5 text-md-end mt-3 mt-md-0">
-                <label class="form-label small text-muted d-block mb-1">Switch Managed Restaurant:</label>
-                <select class="form-select form-select-sm rounded-pill d-inline-block w-auto border shadow-sm px-3" onchange="location.href='@Url.Action("Index", "Restaurant")?storeId=' + this.value;">
-                    @if (ViewBag.AllStores != null)
-                    {
-                        foreach (var s in (List<MVConFramework.Models.Stores>)ViewBag.AllStores)
-                        {
-                            <option value="@s.StoreId" @(Model.Store != null && Model.Store.StoreId == s.StoreId ? "selected" : "")>
-                                🍽️ @s.StoreName (@s.City)
-                            </option>
-                        }
-                    }
-                </select>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <div class="d-inline-flex flex-column align-items-md-end">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 py-2 mb-1 fw-semibold">
+                        <i class="fa-solid fa-store me-1"></i> Store ID: #@(Model.Store != null ? Model.Store.StoreId : 10) (Multi-Tenant Bound)
+                    </span>
+                    <small class="text-muted" style="font-size: 0.78rem;">
+                        <i class="fa-solid fa-user-chef text-secondary me-1"></i> Logged in as: <strong>@(Session["UserName"] ?? "Chef Partner")</strong>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Live Order Arrival Alert Banner (Hidden by default; triggers on new orders) -->
+    <div id="liveOrderArrivalAlert" class="alert alert-danger border-0 rounded-4 shadow-lg p-3 mb-4 d-none position-relative overflow-hidden" style="background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); border-left: 6px solid #ff4757 !important;">
+        <div class="d-flex align-items-start gap-3">
+            <div class="rounded-circle bg-danger text-white p-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 52px; height: 52px; flex-shrink: 0; background-color: #ff4757 !important;">
+                <i class="fa-solid fa-bell-ring fa-bounce fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-danger mb-1" id="alertTitle">
+                        <i class="fa-solid fa-fire text-danger me-1"></i> NEW INCOMING ORDER RECEIVED!
+                    </h5>
+                    <span class="badge bg-danger rounded-pill px-3 py-1" id="alertOrderIdBadge">Order #...</span>
+                </div>
+                <p class="text-dark mb-2" id="alertOrderDetails" style="font-size: 0.95rem;">
+                    Loading new incoming order information...
+                </p>
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold" id="alertPrepBadge">
+                        <i class="fa-regular fa-clock me-1"></i> Preparation Time Allotted: 15 Min
+                    </span>
+                    <span class="badge bg-secondary bg-opacity-10 text-dark border px-3 py-2 rounded-pill" id="alertRiderBadge">
+                        <i class="fa-solid fa-motorcycle me-1"></i> Delivery Rider: Auto-assigns upon packing
+                    </span>
+                    <button type="button" class="btn btn-sm btn-danger rounded-pill px-3 fw-bold ms-auto" onclick="focusIncomingTab()">
+                        <i class="fa-solid fa-kitchen-set me-1"></i> View in Kitchen Queue
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2" onclick="dismissLiveAlert()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kitchen Profile, Operating Hours & Location Summary Banner -->
+    <div class="card border-0 rounded-4 shadow-sm overflow-hidden mb-4 bg-white position-relative">
+        <div class="position-relative" style="height: 180px; background-color: #0f172a;">
+            <img src="@(Model.Store != null && !string.IsNullOrEmpty(Model.Store.BannerUrl) ? Model.Store.BannerUrl : "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200")" 
+                 class="w-100 h-100" style="object-fit: cover; opacity: 0.85;" alt="Kitchen Banner" />
+            
+            <div class="position-absolute top-0 end-0 m-3 d-flex gap-2">
+                <a href="@Url.Action("EditProfile", "Restaurant")" class="btn btn-light btn-sm rounded-pill px-3 py-1 shadow-sm fw-bold">
+                    <i class="fa-solid fa-pen-to-square text-danger me-1"></i> Edit Details, Timings & Banner
+                </a>
+            </div>
+
+            <div class="position-absolute bottom-0 start-0 m-3 d-flex align-items-center gap-3">
+                <img src="@(Model.Store != null && !string.IsNullOrEmpty(Model.Store.ImageUrl) ? Model.Store.ImageUrl : "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=120")" 
+                     class="rounded-circle border border-3 border-white shadow-sm" style="width: 60px; height: 60px; object-fit: cover;" alt="Kitchen Logo" />
+                <div class="text-white drop-shadow">
+                    <h4 class="fw-extrabold mb-0 text-white">@(Model.Store != null ? Model.Store.StoreName : "Your Restaurant")</h4>
+                    <small class="text-light opacity-90">
+                        <i class="fa-solid fa-utensils text-warning me-1"></i> @(Model.Store != null ? Model.Store.Cuisine : "Multi-Cuisine") &bull;
+                        <i class="fa-solid fa-store text-info me-1"></i> @(Model.Store != null ? Model.Store.StoreType : "Fine Dine")
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-3 bg-light border-top">
+            <div class="row g-3 align-items-center">
+                <!-- Operating Hours -->
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="p-2 bg-warning bg-opacity-10 text-warning rounded-circle">
+                            <i class="fa-regular fa-clock fs-5"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">Operating Hours</small>
+                            <strong class="text-dark">
+                                @(Model.Store != null && !string.IsNullOrEmpty(Model.Store.OpeningTime) ? Model.Store.OpeningTime : "10:00 AM") &ndash; 
+                                @(Model.Store != null && !string.IsNullOrEmpty(Model.Store.ClosingTime) ? Model.Store.ClosingTime : "11:00 PM")
+                            </strong>
+                            <span class="badge bg-success rounded-pill ms-1 px-2 py-0" style="font-size: 0.68rem;">Open Now</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kitchen Street Address -->
+                <div class="col-md-5">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="p-2 bg-danger bg-opacity-10 text-danger rounded-circle">
+                            <i class="fa-solid fa-location-dot fs-5"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">Kitchen Doorstep Location</small>
+                            <span class="text-dark small fw-semibold text-truncate d-block" style="max-width: 320px;" title="@(Model.Store != null ? Model.Store.Address : "")">
+                                @(Model.Store != null ? Model.Store.Address : "Address not configured"), @(Model.Store != null ? Model.Store.City : "")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact & Action -->
+                <div class="col-md-3 text-md-end">
+                    <div class="d-flex flex-column align-items-md-end">
+                        <small class="text-muted" style="font-size: 0.72rem;"><i class="fa-solid fa-phone me-1"></i> @(Model.Store != null ? Model.Store.ContactNumber : "9876543210")</small>
+                        <a href="@Url.Action("EditProfile", "Restaurant")" class="text-danger small fw-bold text-decoration-none">
+                            Update Timings & Location &rarr;
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Navigation Pills for Restaurant Operations -->
     <div class="d-flex align-items-center gap-2 overflow-auto pb-3 mb-4">
-        <a href="@Url.Action("Index", "Restaurant", new { storeId = Model.Store != null ? Model.Store.StoreId : 1 })" class="btn btn-danger rounded-pill px-4 py-2 fw-bold" style="background-color: #ff4757; border-color: #ff4757;">
-            <i class="fa-solid fa-bell me-1"></i> Live Kitchen Orders (@Model.LiveOrders.Count)
+        <a href="@Url.Action("Index", "Restaurant")" class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm" style="background-color: #ff4757; border-color: #ff4757;">
+            <i class="fa-solid fa-kitchen-set me-1"></i> Kitchen Orders Queue
         </a>
-        <a href="@Url.Action("ManageMenu", "Restaurant", new { storeId = Model.Store != null ? Model.Store.StoreId : 1 })" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+        <a href="@Url.Action("EditProfile", "Restaurant")" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+            <i class="fa-solid fa-sliders me-1"></i> Kitchen Settings & Banner
+        </a>
+        <a href="@Url.Action("ManageMenu", "Restaurant")" class="btn btn-outline-secondary rounded-pill px-4 py-2">
             <i class="fa-solid fa-book-open me-1"></i> Menu Management (CRUD)
         </a>
-        <a href="@Url.Action("Invoices", "Restaurant", new { storeId = Model.Store != null ? Model.Store.StoreId : 1 })" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+        <a href="@Url.Action("Invoices", "Restaurant")" class="btn btn-outline-secondary rounded-pill px-4 py-2">
             <i class="fa-solid fa-file-invoice-dollar me-1"></i> Invoices & 7% Fee Breakdown
         </a>
-        <a href="@Url.Action("Reviews", "Restaurant", new { storeId = Model.Store != null ? Model.Store.StoreId : 1 })" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+        <a href="@Url.Action("Reviews", "Restaurant")" class="btn btn-outline-secondary rounded-pill px-4 py-2">
             <i class="fa-solid fa-comments me-1"></i> Customer Reviews & Evaluation
         </a>
-        <a href="@Url.Action("Certificate", "Restaurant", new { storeId = Model.Store != null ? Model.Store.StoreId : 1 })" class="btn btn-outline-warning text-dark rounded-pill px-4 py-2 fw-semibold">
-            <i class="fa-solid fa-award text-warning me-1"></i> Trust Certificate (200 Orders)
-        </a>
+        @if (Model.IsCertificateEligible)
+        {
+            <a href="@Url.Action("Certificate", "Restaurant")" class="btn btn-outline-warning text-dark rounded-pill px-4 py-2 fw-semibold" id="topCertBtn">
+                <i class="fa-solid fa-award text-warning me-1"></i> Trust Certificate (Unlocked)
+            </a>
+        }
+        else
+        {
+            <a href="@Url.Action("Certificate", "Restaurant")" class="btn btn-outline-secondary rounded-pill px-4 py-2 text-muted fw-semibold" id="topCertBtn" title="Not eligible yet">
+                <i class="fa-solid fa-lock text-muted me-1"></i> Trust Certificate (Not Eligible &bull; @Model.CompletedOrders/200)
+            </a>
+        }
     </div>
 
     <!-- KPI Metric Cards -->
     <div class="row g-3 mb-4">
-
         <!-- Card 1: Gross Sales -->
         <div class="col-sm-6 col-xl-3">
             <div class="card border-0 rounded-4 shadow-sm p-4 bg-white h-100">
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                    <span class="text-muted small fw-semibold text-uppercase">Gross Sales</span>
+                    <span class="text-muted small fw-semibold text-uppercase">Gross Customer Sales</span>
                     <span class="p-2 bg-success bg-opacity-10 text-success rounded-3"><i class="fa-solid fa-indian-rupee-sign"></i></span>
                 </div>
-                <h3 class="fw-extrabold text-dark mb-1">&#8377;@Model.GrossSales.ToString("N0")</h3>
-                <small class="text-muted">Total customer payments</small>
+                <h3 class="fw-extrabold text-dark mb-1" id="statGrossSales">&#8377;@Model.GrossSales.ToString("N0")</h3>
+                <small class="text-muted">Total customer billings collected</small>
             </div>
         </div>
 
@@ -80,8 +206,8 @@
                     <span class="text-muted small fw-semibold text-uppercase">Admin Platform Fee</span>
                     <span class="p-2 bg-warning bg-opacity-10 text-warning rounded-3"><i class="fa-solid fa-percent"></i></span>
                 </div>
-                <h3 class="fw-extrabold text-warning mb-1">&#8377;@Model.PlatformFeeDeducted.ToString("N0")</h3>
-                <small class="text-muted">7% monthly platform commission</small>
+                <h3 class="fw-extrabold text-warning mb-1" id="statPlatformFee">&#8377;@Model.PlatformFeeDeducted.ToString("N0")</h3>
+                <small class="text-muted">7% monthly platform commission to Admin</small>
             </div>
         </div>
 
@@ -92,8 +218,8 @@
                     <span class="text-muted small fw-semibold text-uppercase">Net Payout (93%)</span>
                     <span class="p-2 bg-primary bg-opacity-10 text-primary rounded-3"><i class="fa-solid fa-wallet"></i></span>
                 </div>
-                <h3 class="fw-extrabold text-primary mb-1">&#8377;@Model.NetPayout.ToString("N0")</h3>
-                <small class="text-muted">Net restaurant earnings transferred</small>
+                <h3 class="fw-extrabold text-primary mb-1" id="statNetPayout">&#8377;@Model.NetPayout.ToString("N0")</h3>
+                <small class="text-muted">Net restaurant earnings credited to bank</small>
             </div>
         </div>
 
@@ -104,29 +230,36 @@
                     <span class="text-muted small fw-semibold text-uppercase">Orders & Rating</span>
                     <span class="p-2 bg-danger bg-opacity-10 text-danger rounded-3"><i class="fa-solid fa-star"></i></span>
                 </div>
-                <h3 class="fw-extrabold text-dark mb-1">@Model.CompletedOrders <span class="fs-6 fw-normal text-muted">orders</span></h3>
+                <h3 class="fw-extrabold text-dark mb-1" id="statCompletedOrders">@Model.CompletedOrders <span class="fs-6 fw-normal text-muted">completed</span></h3>
                 <div class="d-flex align-items-center gap-1 text-warning small fw-bold">
-                    <i class="fa-solid fa-star"></i> @Model.AverageRating.ToString("0.0") Rating
+                    <i class="fa-solid fa-star"></i> @Model.AverageRating.ToString("0.0") Kitchen Rating
                 </div>
             </div>
         </div>
-
     </div>
 
     <!-- 200 Orders Certificate Milestone Banner -->
-    <div class="card border-0 rounded-4 shadow-sm p-4 mb-5 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);">
+    <div class="card border-0 rounded-4 shadow-sm p-4 mb-4 text-white position-relative overflow-hidden" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);">
         <div class="row align-items-center">
             <div class="col-lg-8">
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <span class="badge bg-warning text-dark rounded-pill fw-bold px-3 py-1">
                         <i class="fa-solid fa-award me-1"></i> Quality & Trust Certificate Program
                     </span>
-                    @if (Model.IsCertificateEligible)
-                    {
-                        <span class="badge bg-success rounded-pill fw-bold px-3 py-1">
-                            <i class="fa-solid fa-check-circle me-1"></i> Unlocked & Certified
-                        </span>
-                    }
+                    <span id="milestoneBadgeContainer">
+                        @if (Model.IsCertificateEligible)
+                        {
+                            <span class="badge bg-success rounded-pill fw-bold px-3 py-1">
+                                <i class="fa-solid fa-check-circle me-1"></i> Unlocked & Certified
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger rounded-pill fw-bold px-3 py-1">
+                                <i class="fa-solid fa-lock me-1"></i> Not Eligible Yet
+                            </span>
+                        }
+                    </span>
                 </div>
                 <h4 class="fw-bold mb-2">Complete 200 orders with 3.5+ rating to earn the Official Certificate of Trust</h4>
                 <p class="mb-3 text-light" style="opacity: 0.85; font-size: 0.92rem;">
@@ -136,144 +269,696 @@
                 <!-- Milestone Progress Bar -->
                 <div class="d-flex align-items-center gap-3" style="max-width: 500px;">
                     <div class="progress flex-grow-1 rounded-pill" style="height: 12px; background: rgba(255,255,255,0.2);">
-                        <div class="progress-bar bg-warning" role="progressbar" style="width: @Math.Min(100, (Model.CompletedOrders * 100) / 200)%;"></div>
+                        <div class="progress-bar bg-warning" id="milestoneProgressBar" role="progressbar" style="width: @Math.Min(100, (Model.CompletedOrders * 100) / 200)%;"></div>
                     </div>
-                    <span class="fw-bold text-warning small text-nowrap">@Model.CompletedOrders / 200 Orders</span>
+                    <span class="fw-bold text-warning small text-nowrap" id="milestoneProgressText">@Model.CompletedOrders / 200 Orders</span>
                 </div>
             </div>
 
-            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0" id="milestoneActionContainer">
                 @if (Model.IsCertificateEligible)
                 {
-                    <a href="@Url.Action("Certificate", "Restaurant", new { storeId = Model.Store.StoreId })" class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-dark shadow">
-                        <i class="fa-solid fa-download me-2"></i> View & Download Certificate
+                    <a href="@Url.Action("Certificate", "Restaurant")" class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-dark shadow">
+                        <i class="fa-solid fa-download me-2"></i> View &amp; Download Certificate
                     </a>
                 }
                 else
                 {
-                    <button class="btn btn-outline-light rounded-pill px-4 py-2 opacity-75" disabled>
-                        <i class="fa-solid fa-lock me-2"></i> @(200 - Model.CompletedOrders) more orders needed
-                    </button>
+                    <a href="@Url.Action("Certificate", "Restaurant")" class="btn btn-outline-light rounded-pill px-4 py-2 opacity-75 fw-semibold" title="View eligibility requirements">
+                        <i class="fa-solid fa-lock me-2"></i> Not Eligible (@(200 - Model.CompletedOrders) more needed)
+                    </a>
                 }
             </div>
         </div>
     </div>
 
-    <!-- Live Orders & Packing Timers Table -->
-    <div class="card border-0 rounded-4 shadow-sm p-4 bg-white">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h5 class="fw-bold mb-1"><i class="fa-solid fa-kitchen-set text-danger me-2"></i> Incoming Orders & Kitchen Packing Timers</h5>
-                <p class="text-muted small mb-0">Follow preparation allotment rule: ≤2 items (15m), 3-5 items (30m), >10 items (60m). Marking packed automatically assigns a delivery rider.</p>
-            </div>
-            <span class="badge bg-danger rounded-pill px-3 py-2">
-                @Model.LiveOrders.Count Total Orders
-            </span>
+    <!-- Tabbed Order Sections (Incoming, Out for Delivery, Completed, All Orders) -->
+    <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden mb-5">
+
+        <!-- Navigation Tabs Header -->
+        <div class="p-3 bg-light border-bottom">
+            <ul class="nav nav-pills gap-2" id="orderSectionsTabs" role="tablist">
+
+                <!-- Tab 1: Incoming / In Kitchen Orders -->
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2" id="incoming-tab" data-bs-toggle="pill" data-bs-target="#tab-incoming" type="button" role="tab" aria-controls="tab-incoming" aria-selected="true">
+                        <i class="fa-solid fa-fire text-danger"></i>
+                        <span>Incoming & Kitchen Packing</span>
+                        <span class="badge @(incomingOrdersCount > 0 ? "bg-danger" : "bg-secondary") rounded-pill" id="badgeIncomingCount">@incomingOrdersCount</span>
+                    </button>
+                </li>
+
+                <!-- Tab 2: Out For Delivery Orders -->
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2" id="ready-tab" data-bs-toggle="pill" data-bs-target="#tab-ready" type="button" role="tab" aria-controls="tab-ready" aria-selected="false">
+                        <i class="fa-solid fa-motorcycle text-primary"></i>
+                        <span>Ready & Out for Delivery</span>
+                        <span class="badge @(readyOrdersCount > 0 ? "bg-primary" : "bg-secondary") rounded-pill" id="badgeReadyCount">@readyOrdersCount</span>
+                    </button>
+                </li>
+
+                <!-- Tab 3: Completed Orders -->
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2" id="completed-tab" data-bs-toggle="pill" data-bs-target="#tab-completed" type="button" role="tab" aria-controls="tab-completed" aria-selected="false">
+                        <i class="fa-solid fa-circle-check text-success"></i>
+                        <span>Delivered & Completed</span>
+                        <span class="badge bg-success rounded-pill" id="badgeCompletedCount">@completedOrdersCount</span>
+                    </button>
+                </li>
+
+                <!-- Tab 4: Kitchen Alerts & Notifications -->
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2" id="alerts-tab" data-bs-toggle="pill" data-bs-target="#tab-alerts" type="button" role="tab" aria-controls="tab-alerts" aria-selected="false">
+                        <i class="fa-solid fa-bell text-danger"></i>
+                        <span>Kitchen Alerts</span>
+                        <span class="badge bg-danger rounded-pill" id="dashNotifBadge">0</span>
+                    </button>
+                </li>
+
+                <!-- Tab 5: All Orders History -->
+                <li class="nav-item ms-md-auto" role="presentation">
+                    <button class="nav-link rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2" id="all-tab" data-bs-toggle="pill" data-bs-target="#tab-all" type="button" role="tab" aria-controls="tab-all" aria-selected="false">
+                        <i class="fa-solid fa-list-check text-dark"></i>
+                        <span>All Store Orders History</span>
+                        <span class="badge bg-dark rounded-pill" id="badgeTotalCount">@(Model.LiveOrders != null ? Model.LiveOrders.Count : 0)</span>
+                    </button>
+                </li>
+
+            </ul>
         </div>
 
-        @if (Model.LiveOrders != null && Model.LiveOrders.Count > 0)
-        {
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr class="small text-muted text-uppercase">
-                            <th>Order Details</th>
-                            <th>Customer & Address</th>
-                            <th>Dishes Ordered</th>
-                            <th>Allotted Packing Time</th>
-                            <th>Financials</th>
-                            <th>Status</th>
-                            <th class="text-end">Kitchen Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var o in Model.LiveOrders)
-                        {
-                            <tr>
-                                <td>
-                                    <strong class="text-dark d-block">#@o.OrderId</strong>
-                                    <small class="text-muted">@o.OrderDate.ToString("hh:mm tt, dd MMM")</small>
-                                </td>
-                                <td>
-                                    <span class="fw-semibold text-dark d-block">@o.CustomerName</span>
-                                    <span class="text-muted small">📍 @o.DeliveryCity</span>
-                                </td>
-                                <td>
-                                    <span class="text-dark small d-block text-truncate" style="max-width: 180px;" title="@o.ProductName">@o.ProductName</span>
-                                    <span class="badge bg-light text-dark border">@o.Quantity items</span>
-                                </td>
-                                <td>
-                                    <!-- Packing allotment calculation based on quantity -->
-                                    <span class="badge @(o.Quantity <= 2 ? "bg-info text-dark" : (o.Quantity <= 5 ? "bg-warning text-dark" : "bg-danger")) rounded-pill px-3 py-1">
-                                        <i class="fa-regular fa-clock me-1"></i> @(o.Quantity <= 2 ? "15 Min" : (o.Quantity <= 5 ? "30 Min" : "60 Min (1h)"))
-                                    </span>
-                                </td>
-                                <td>
-                                    <strong class="text-dark d-block">&#8377;@o.TotalAmount</strong>
-                                    <small class="text-muted" style="font-size: 0.72rem;">Fee (7%): &#8377;@o.PlatformFee</small>
-                                </td>
-                                <td>
-                                    @if (o.OrderStatus == "Delivered")
+        <!-- Tab Content Panes -->
+        <div class="tab-content p-4" id="orderSectionsContent">
+
+            <!-- ========================================== -->
+            <!-- TAB 1: INCOMING & KITCHEN PACKING ORDERS   -->
+            <!-- ========================================== -->
+            <div class="tab-pane fade show active" id="tab-incoming" role="tabpanel" aria-labelledby="incoming-tab">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="fw-bold text-danger mb-1">
+                            <i class="fa-solid fa-fire me-2"></i> Live Kitchen Preparation Queue
+                        </h5>
+                        <p class="text-muted small mb-0">
+                            Strict packing time rules: <strong>&le;2 items (15 min)</strong>, <strong>3&ndash;5 items (30 min)</strong>, <strong>&gt;10 items (60 min / 1 hr)</strong>.
+                            Marking an order packed instantly assigns an available delivery rider from the active fleet.
+                        </p>
+                    </div>
+                </div>
+
+                @{
+                    var incomingOrders = Model.LiveOrders != null ? Model.LiveOrders.Where(o => o.OrderStatus == "Placed" || o.OrderStatus == "Preparing").ToList() : new List<MVConFramework.Models.Orders>();
+                }
+
+                <div id="incomingOrdersTableWrapper">
+                    @if (incomingOrders.Count > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr class="small text-muted text-uppercase">
+                                        <th>Order ID & Time</th>
+                                        <th>Customer & Delivery Address</th>
+                                        <th>Dishes & Items</th>
+                                        <th>Packing Allotment Rule</th>
+                                        <th>Financials</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Kitchen Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="incomingOrdersTbody">
+                                    @foreach (var o in incomingOrders)
                                     {
-                                        <span class="badge bg-success rounded-pill">Delivered</span>
+                                        <tr id="order-row-@o.OrderId">
+                                            <td>
+                                                <strong class="text-dark d-block">#@o.OrderId</strong>
+                                                <small class="text-muted">@o.OrderDate.ToString("hh:mm tt, dd MMM")</small>
+                                            </td>
+                                            <td>
+                                                <span class="fw-bold text-dark d-block">@o.CustomerName</span>
+                                                <small class="text-muted d-block text-truncate" style="max-width: 220px;" title="@o.DeliveryAddress">
+                                                    <i class="fa-solid fa-location-dot text-danger me-1"></i> @o.DeliveryAddress, @o.DeliveryCity
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <span class="text-dark fw-semibold small d-block text-truncate" style="max-width: 200px;" title="@o.ProductName">@o.ProductName</span>
+                                                <span class="badge bg-light text-dark border">@o.Quantity item(s)</span>
+                                            </td>
+                                            <td>
+                                                @{
+                                                    int prepRule = o.PreparationTimeMinutes > 0 ? o.PreparationTimeMinutes : (o.Quantity <= 2 ? 15 : (o.Quantity <= 5 ? 30 : 60));
+                                                    string prepClass = prepRule <= 15 ? "bg-info text-dark" : (prepRule <= 30 ? "bg-warning text-dark" : "bg-danger text-white");
+                                                }
+                                                <span class="badge @prepClass rounded-pill px-3 py-1 fw-bold">
+                                                    <i class="fa-regular fa-clock me-1"></i> @prepRule Min Rule
+                                                </span>
+                                                <small class="d-block text-muted" style="font-size: 0.72rem;">Allotted Kitchen Prep</small>
+                                            </td>
+                                            <td>
+                                                <strong class="text-dark d-block">&#8377;@o.TotalAmount</strong>
+                                                <small class="text-muted" style="font-size: 0.72rem;">7% Admin Fee: &#8377;@o.PlatformFee</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1">
+                                                    <i class="fa-solid fa-kitchen-set me-1"></i> Preparing in Kitchen
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                @using (Html.BeginForm("UpdateOrderStatus", "Restaurant", FormMethod.Post, new { @class = "d-inline" }))
+                                                {
+                                                    <input type="hidden" name="orderId" value="@o.OrderId" />
+                                                    <input type="hidden" name="status" value="ReadyForPickup" />
+                                                    <button type="submit" class="btn btn-success btn-sm rounded-pill fw-bold px-3 py-1 shadow-sm" title="Mark Food as Packed and Automatically Assign Active Delivery Rider">
+                                                        <i class="fa-solid fa-box-open me-1"></i> Mark Packed & Assign Rider
+                                                    </button>
+                                                }
+                                            </td>
+                                        </tr>
                                     }
-                                    else if (o.OrderStatus == "OutForDelivery")
-                                    {
-                                        <span class="badge bg-primary rounded-pill">Out for Delivery</span>
-                                    }
-                                    else if (o.OrderStatus == "ReadyForPickup")
-                                    {
-                                        <span class="badge bg-info text-dark rounded-pill">Food Packed (Rider Assigned)</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-warning text-dark rounded-pill">Packing in Kitchen</span>
-                                    }
-                                </td>
-                                <td class="text-end">
-                                    <div class="d-flex justify-content-end gap-1">
-                                        @if (o.OrderStatus == "Placed" || o.OrderStatus == "Preparing")
-                                        {
-                                            using (Html.BeginForm("UpdateOrderStatus", "Restaurant", FormMethod.Post, new { @class = "d-inline" }))
-                                            {
-                                                <input type="hidden" name="orderId" value="@o.OrderId" />
-                                                <input type="hidden" name="status" value="ReadyForPickup" />
-                                                <input type="hidden" name="storeId" value="@Model.Store.StoreId" />
-                                                <button type="submit" class="btn btn-outline-success btn-sm rounded-pill fw-bold" title="Pack Food & Auto-Assign Delivery Agent from Database">
-                                                    <i class="fa-solid fa-box me-1"></i> Mark Packed (Assign Agent)
-                                                </button>
-                                            }
-                                        }
-                                        else if (o.OrderStatus == "ReadyForPickup" || o.OrderStatus == "OutForDelivery")
-                                        {
-                                            using (Html.BeginForm("UpdateOrderStatus", "Restaurant", FormMethod.Post, new { @class = "d-inline" }))
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <div class="mb-3">
+                                <i class="fa-solid fa-kitchen-set text-secondary fs-1" style="opacity: 0.35;"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark">Kitchen Queue is Clear!</h6>
+                            <p class="small text-muted mb-0">No incoming orders waiting for kitchen preparation at this moment.</p>
+                            <small class="text-success"><i class="fa-solid fa-satellite-dish me-1"></i> Real-time listener active: New customer orders will ring here automatically.</small>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- TAB 2: READY & OUT FOR DELIVERY ORDERS     -->
+            <!-- ========================================== -->
+            <div class="tab-pane fade" id="tab-ready" role="tabpanel" aria-labelledby="ready-tab">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="fw-bold text-primary mb-1">
+                            <i class="fa-solid fa-motorcycle me-2"></i> Food Packed & Out for Delivery
+                        </h5>
+                        <p class="text-muted small mb-0">
+                            Orders packed with assigned active delivery riders dispatched for customer doorstep delivery (~45 min ETA).
+                        </p>
+                    </div>
+                </div>
+
+                @{
+                    var readyOrders = Model.LiveOrders != null ? Model.LiveOrders.Where(o => o.OrderStatus == "ReadyForPickup" || o.OrderStatus == "OutForDelivery").ToList() : new List<MVConFramework.Models.Orders>();
+                }
+
+                @if (readyOrders.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr class="small text-muted text-uppercase">
+                                    <th>Order ID</th>
+                                    <th>Customer & Address</th>
+                                    <th>Assigned Delivery Partner</th>
+                                    <th>ETA & Distance</th>
+                                    <th>Dishes Ordered</th>
+                                    <th>Financials</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var o in readyOrders)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong class="text-dark d-block">#@o.OrderId</strong>
+                                            <small class="text-muted">@o.OrderDate.ToString("hh:mm tt, dd MMM")</small>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-dark d-block">@o.CustomerName</span>
+                                            <small class="text-muted d-block text-truncate" style="max-width: 220px;" title="@o.DeliveryAddress">
+                                                <i class="fa-solid fa-location-dot text-danger me-1"></i> @o.DeliveryAddress, @o.DeliveryCity
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                                    <i class="fa-solid fa-person-biking"></i>
+                                                </div>
+                                                <div>
+                                                    <span class="fw-bold text-dark d-block small">
+                                                        @(string.IsNullOrEmpty(o.AssignedAgentName) ? "Rider Dispatched" : o.AssignedAgentName)
+                                                    </span>
+                                                    <small class="text-muted">
+                                                        <i class="fa-solid fa-phone me-1"></i> @(string.IsNullOrEmpty(o.AssignedAgentPhone) ? "Available on Order" : o.AssignedAgentPhone)
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary rounded-pill px-3 py-1">
+                                                <i class="fa-solid fa-route me-1"></i> ~@(o.EstimatedDeliveryMinutes > 0 ? o.EstimatedDeliveryMinutes : 45) Mins
+                                            </span>
+                                            <small class="text-muted d-block" style="font-size: 0.72rem;">Distance: @(o.DistanceKm > 0 ? o.DistanceKm.ToString("0.0") : "3.5") km</small>
+                                        </td>
+                                        <td>
+                                            <span class="text-dark small d-block text-truncate" style="max-width: 180px;">@o.ProductName</span>
+                                            <span class="badge bg-light text-dark border">@o.Quantity item(s)</span>
+                                        </td>
+                                        <td>
+                                            <strong class="text-dark d-block">&#8377;@o.TotalAmount</strong>
+                                            <small class="text-success" style="font-size: 0.72rem;">Net 93%: &#8377;@(o.TotalAmount - o.PlatformFee)</small>
+                                        </td>
+                                        <td class="text-end">
+                                            @using (Html.BeginForm("UpdateOrderStatus", "Restaurant", FormMethod.Post, new { @class = "d-inline" }))
                                             {
                                                 <input type="hidden" name="orderId" value="@o.OrderId" />
                                                 <input type="hidden" name="status" value="Delivered" />
-                                                <input type="hidden" name="storeId" value="@Model.Store.StoreId" />
-                                                <button type="submit" class="btn btn-success btn-sm rounded-pill fw-bold">
-                                                    <i class="fa-solid fa-check-double me-1"></i> Mark Delivered
+                                                <button type="submit" class="btn btn-outline-success btn-sm rounded-pill fw-bold px-3 py-1" title="Mark order as successfully delivered to customer">
+                                                    <i class="fa-solid fa-check-double me-1"></i> Confirm Delivered
                                                 </button>
                                             }
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-light text-muted border">Completed</span>
-                                        }
-                                    </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-motorcycle text-secondary fs-1 mb-2" style="opacity: 0.35;"></i>
+                        <h6 class="fw-bold text-dark">No Orders Out for Delivery</h6>
+                        <p class="small text-muted mb-0">Pack an incoming order from the queue to dispatch a delivery rider.</p>
+                    </div>
+                }
+            </div>
+
+            <!-- ========================================== -->
+            <!-- TAB 3: DELIVERED & COMPLETED ORDERS        -->
+            <!-- ========================================== -->
+            <div class="tab-pane fade" id="tab-completed" role="tabpanel" aria-labelledby="completed-tab">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="fw-bold text-success mb-1">
+                            <i class="fa-solid fa-circle-check me-2"></i> Completed & Delivered Orders
+                        </h5>
+                        <p class="text-muted small mb-0">
+                            Orders successfully handed over to customers. Net 93% earnings credited after 7% platform fee deduction.
+                        </p>
+                    </div>
+                </div>
+
+                @{
+                    var completedOrders = Model.LiveOrders != null ? Model.LiveOrders.Where(o => o.OrderStatus == "Delivered").ToList() : new List<MVConFramework.Models.Orders>();
+                }
+
+                @if (completedOrders.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr class="small text-muted text-uppercase">
+                                    <th>Order & Invoice</th>
+                                    <th>Customer & City</th>
+                                    <th>Dishes Delivered</th>
+                                    <th>Gross Amount</th>
+                                    <th>7% Platform Fee</th>
+                                    <th>Net Restaurant Payout</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var o in completedOrders)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong class="text-dark d-block">#@o.OrderId</strong>
+                                            <small class="text-muted">@o.InvoiceNumber &bull; @o.OrderDate.ToString("hh:mm tt, dd MMM")</small>
+                                        </td>
+                                        <td>
+                                            <span class="fw-semibold text-dark d-block">@o.CustomerName</span>
+                                            <small class="text-muted">📍 @o.DeliveryCity</small>
+                                        </td>
+                                        <td>
+                                            <span class="text-dark small d-block text-truncate" style="max-width: 200px;">@o.ProductName</span>
+                                            <span class="badge bg-light text-dark border">@o.Quantity item(s)</span>
+                                        </td>
+                                        <td>
+                                            <strong class="text-dark">&#8377;@o.TotalAmount</strong>
+                                        </td>
+                                        <td>
+                                            <span class="text-warning fw-semibold">&#8377;@o.PlatformFee</span>
+                                        </td>
+                                        <td>
+                                            <strong class="text-success">&#8377;@(o.TotalAmount - o.PlatformFee)</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success rounded-pill px-3 py-1">
+                                                <i class="fa-solid fa-check-circle me-1"></i> Delivered
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-receipt text-secondary fs-1 mb-2" style="opacity: 0.35;"></i>
+                        <h6 class="fw-bold text-dark">No Completed Orders Yet</h6>
+                        <p class="small text-muted mb-0">Delivered orders will appear here along with invoice and platform fee breakdowns.</p>
+                    </div>
+                }
+            </div>
+
+            <!-- ========================================== -->
+            <!-- TAB 4: ALL ORDERS (COMPLETE HISTORY)       -->
+            <!-- ========================================== -->
+            <div class="tab-pane fade" id="tab-all" role="tabpanel" aria-labelledby="all-tab">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">
+                            <i class="fa-solid fa-list-check me-2"></i> Complete Order History for @(Model.Store != null ? Model.Store.StoreName : "Your Restaurant")
+                        </h5>
+                        <p class="text-muted small mb-0">
+                            Searchable log of all past and current orders processed by this kitchen.
+                        </p>
+                    </div>
+                    <div>
+                        <input type="text" class="form-control form-control-sm rounded-pill px-3" id="allOrdersSearchInput" placeholder="🔍 Search orders, customer, dish..." onkeyup="filterAllOrdersTable()" style="max-width: 250px;" />
+                    </div>
+                </div>
+
+                @if (Model.LiveOrders != null && Model.LiveOrders.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="allOrdersTable">
+                            <thead class="table-light">
+                                <tr class="small text-muted text-uppercase">
+                                    <th>Order Details</th>
+                                    <th>Customer & City</th>
+                                    <th>Dishes Ordered</th>
+                                    <th>Allotted Prep Time</th>
+                                    <th>Gross Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var o in Model.LiveOrders)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong class="text-dark d-block">#@o.OrderId</strong>
+                                            <small class="text-muted">@o.InvoiceNumber &bull; @o.OrderDate.ToString("hh:mm tt, dd MMM")</small>
+                                        </td>
+                                        <td>
+                                            <span class="fw-semibold text-dark d-block">@o.CustomerName</span>
+                                            <small class="text-muted">📍 @o.DeliveryCity</small>
+                                        </td>
+                                        <td>
+                                            <span class="text-dark small d-block text-truncate" style="max-width: 200px;">@o.ProductName</span>
+                                            <span class="badge bg-light text-dark border">@o.Quantity item(s)</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge @(o.Quantity <= 2 ? "bg-info text-dark" : (o.Quantity <= 5 ? "bg-warning text-dark" : "bg-danger text-white")) rounded-pill px-3 py-1">
+                                                <i class="fa-regular fa-clock me-1"></i> @(o.PreparationTimeMinutes > 0 ? o.PreparationTimeMinutes : (o.Quantity <= 2 ? 15 : (o.Quantity <= 5 ? 30 : 60))) Min
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong class="text-dark d-block">&#8377;@o.TotalAmount</strong>
+                                            <small class="text-muted" style="font-size: 0.72rem;">Fee (7%): &#8377;@o.PlatformFee</small>
+                                        </td>
+                                        <td>
+                                            @if (o.OrderStatus == "Delivered")
+                                            {
+                                                <span class="badge bg-success rounded-pill px-3 py-1">Delivered</span>
+                                            }
+                                            else if (o.OrderStatus == "OutForDelivery")
+                                            {
+                                                <span class="badge bg-primary rounded-pill px-3 py-1">Out for Delivery</span>
+                                            }
+                                            else if (o.OrderStatus == "ReadyForPickup")
+                                            {
+                                                <span class="badge bg-info text-dark rounded-pill px-3 py-1">Food Packed (Rider Assigned)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1">Packing in Kitchen</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted small">
+                        No orders registered for this restaurant yet.
+                    </div>
+                }
+            </div>
+
+            <!-- ========================================== -->
+            <!-- TAB 4: KITCHEN ALERTS & NOTIFICATIONS      -->
+            <!-- ========================================== -->
+            <div class="tab-pane fade" id="tab-alerts" role="tabpanel" aria-labelledby="alerts-tab">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="fw-bold text-danger mb-1">
+                            <i class="fa-solid fa-bell me-2"></i> Real-Time Kitchen Notification Center
+                        </h5>
+                        <p class="text-muted small mb-0">Instant operational alerts for new incoming orders, preparation timers, delivery rider pickups, customer reviews, and platform fee deductions.</p>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold" onclick="markAllNotificationsRead()">
+                            <i class="fa-solid fa-check-double me-1"></i> Mark All as Read
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-uppercase small text-muted">
+                            <tr>
+                                <th style="width: 140px;">Status</th>
+                                <th style="width: 220px;">Notification</th>
+                                <th>Details</th>
+                                <th style="width: 180px;">Received</th>
+                                <th style="width: 130px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashNotifTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted small">
+                                    <div class="spinner-border spinner-border-sm text-danger mb-2" role="status"></div>
+                                    <p class="mb-0">Loading recent notifications...</p>
                                 </td>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        }
-        else
-        {
-            <div class="text-center py-5 text-muted small">
-                No orders active at this moment. Incoming orders will reflect here automatically.
-            </div>
-        }
+
+        </div>
+
     </div>
 
 </div>
+
+@section scripts {
+<script>
+    // Audio synthesizer for kitchen alert chime (Web Audio API - no external assets required)
+    function playKitchenOrderChime() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+
+            // Tone 1: 587.33 Hz (D5)
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.type = 'triangle';
+            osc1.frequency.setValueAtTime(587.33, ctx.currentTime);
+            gain1.gain.setValueAtTime(0.25, ctx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
+            osc1.start(ctx.currentTime);
+            osc1.stop(ctx.currentTime + 0.35);
+
+            // Tone 2: 880 Hz (A5)
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
+            gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.15);
+            gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.start(ctx.currentTime + 0.15);
+            osc2.stop(ctx.currentTime + 0.55);
+        } catch (e) {
+            console.log("Audio alert playback error (harmless):", e);
+        }
+    }
+
+    // Keep track of the highest order ID known to this screen
+    let lastKnownOrderId = @maxInitialOrderId;
+
+    // Real-Time Polling Engine (Every 3 seconds)
+    function pollKitchenOrders() {
+        fetch('@Url.Action("GetLiveKitchenUpdates", "Restaurant")?lastKnownOrderId=' + lastKnownOrderId, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) return;
+
+            // Update KPI counters
+            if (data.incomingCount !== undefined) {
+                const bIn = document.getElementById('badgeIncomingCount');
+                if (bIn) {
+                    bIn.innerText = data.incomingCount;
+                    bIn.className = data.incomingCount > 0 ? "badge bg-danger rounded-pill" : "badge bg-secondary rounded-pill";
+                }
+            }
+            if (data.outForDeliveryCount !== undefined) {
+                const bOut = document.getElementById('badgeReadyCount');
+                if (bOut) {
+                    bOut.innerText = data.outForDeliveryCount;
+                    bOut.className = data.outForDeliveryCount > 0 ? "badge bg-primary rounded-pill" : "badge bg-secondary rounded-pill";
+                }
+            }
+            if (data.completedCount !== undefined) {
+                const bComp = document.getElementById('badgeCompletedCount');
+                if (bComp) bComp.innerText = data.completedCount;
+                const statComp = document.getElementById('statCompletedOrders');
+                if (statComp) statComp.innerHTML = data.completedCount + ' <span class="fs-6 fw-normal text-muted">completed</span>';
+            }
+            if (data.totalCount !== undefined) {
+                const bTot = document.getElementById('badgeTotalCount');
+                if (bTot) bTot.innerText = data.totalCount;
+            }
+            if (data.grossSales !== undefined) {
+                const sGross = document.getElementById('statGrossSales');
+                if (sGross) sGross.innerHTML = '&#8377;' + Number(data.grossSales).toLocaleString('en-IN');
+            }
+            if (data.platformFee !== undefined) {
+                const sFee = document.getElementById('statPlatformFee');
+                if (sFee) sFee.innerHTML = '&#8377;' + Number(data.platformFee).toLocaleString('en-IN');
+            }
+            if (data.netPayout !== undefined) {
+                const sNet = document.getElementById('statNetPayout');
+                if (sNet) sNet.innerHTML = '&#8377;' + Number(data.netPayout).toLocaleString('en-IN');
+            }
+
+            // Real-Time Update for 200 Orders Certificate Milestone Banner
+            const compCount = data.completedOrders !== undefined ? data.completedOrders : data.completedCount;
+            if (compCount !== undefined) {
+                const pct = Math.min(100, Math.round((compCount * 100) / 200));
+                const pBar = document.getElementById('milestoneProgressBar');
+                if (pBar) pBar.style.width = pct + '%';
+                const pTxt = document.getElementById('milestoneProgressText');
+                if (pTxt) pTxt.innerText = compCount + ' / 200 Orders';
+
+                const badgeContainer = document.getElementById('milestoneBadgeContainer');
+                const actionContainer = document.getElementById('milestoneActionContainer');
+                const topCertBtn = document.getElementById('topCertBtn');
+
+                if (data.isCertificateEligible) {
+                    if (badgeContainer) {
+                        badgeContainer.innerHTML = '<span class="badge bg-success rounded-pill fw-bold px-3 py-1"><i class="fa-solid fa-check-circle me-1"></i> Unlocked &amp; Certified</span>';
+                    }
+                    if (actionContainer) {
+                        actionContainer.innerHTML = '<a href="@Url.Action("Certificate", "Restaurant")" class="btn btn-warning rounded-pill px-4 py-2 fw-bold text-dark shadow"><i class="fa-solid fa-download me-2"></i> View &amp; Download Certificate</a>';
+                    }
+                    if (topCertBtn) {
+                        topCertBtn.className = 'btn btn-outline-warning text-dark rounded-pill px-4 py-2 fw-semibold';
+                        topCertBtn.innerHTML = '<i class="fa-solid fa-award text-warning me-1"></i> Trust Certificate (Unlocked)';
+                    }
+                } else {
+                    const needed = data.ordersNeeded !== undefined ? data.ordersNeeded : Math.max(0, 200 - compCount);
+                    if (badgeContainer) {
+                        badgeContainer.innerHTML = '<span class="badge bg-danger rounded-pill fw-bold px-3 py-1"><i class="fa-solid fa-lock me-1"></i> Not Eligible Yet</span>';
+                    }
+                    if (actionContainer) {
+                        actionContainer.innerHTML = '<a href="@Url.Action("Certificate", "Restaurant")" class="btn btn-outline-light rounded-pill px-4 py-2 opacity-75 fw-semibold" title="View eligibility requirements"><i class="fa-solid fa-lock me-2"></i> Not Eligible (' + needed + ' more needed)</a>';
+                    }
+                    if (topCertBtn) {
+                        topCertBtn.className = 'btn btn-outline-secondary rounded-pill px-4 py-2 text-muted fw-semibold';
+                        topCertBtn.innerHTML = '<i class="fa-solid fa-lock text-muted me-1"></i> Trust Certificate (Not Eligible &bull; ' + compCount + '/200)';
+                    }
+                }
+            }
+
+            // Check if there are newly placed orders
+            if (data.newOrders && data.newOrders.length > 0) {
+                const latest = data.newOrders[0];
+                playKitchenOrderChime();
+
+                // Show top banner alert
+                const alertBox = document.getElementById('liveOrderArrivalAlert');
+                if (alertBox) {
+                    document.getElementById('alertOrderIdBadge').innerText = 'Order #' + latest.OrderId;
+                    document.getElementById('alertOrderDetails').innerHTML = 
+                        '<strong>' + latest.CustomerName + '</strong> (' + latest.DeliveryCity + ') ordered <strong>' + latest.ProductName + '</strong> (' + latest.Quantity + ' items). ' +
+                        'Total: <strong>&#8377;' + latest.TotalAmount + '</strong> &bull; Address: ' + latest.DeliveryAddress;
+                    document.getElementById('alertPrepBadge').innerHTML = 
+                        '<i class="fa-regular fa-clock me-1"></i> Kitchen Preparation Allotted: ' + latest.PrepTimeMinutes + ' Min';
+                    alertBox.classList.remove('d-none');
+                }
+
+                // If currently on incoming tab, reload content smoothly or insert row
+                setTimeout(() => {
+                    location.reload();
+                }, 4000);
+            }
+
+            if (data.maxOrderId && data.maxOrderId > lastKnownOrderId) {
+                lastKnownOrderId = data.maxOrderId;
+            }
+        })
+        .catch(err => {
+            console.log("Polling error (network or temporary):", err);
+        });
+    }
+
+    // Start polling every 3 seconds
+    setInterval(pollKitchenOrders, 3000);
+
+    function dismissLiveAlert() {
+        const alertBox = document.getElementById('liveOrderArrivalAlert');
+        if (alertBox) alertBox.classList.add('d-none');
+    }
+
+    function focusIncomingTab() {
+        const tabEl = document.getElementById('incoming-tab');
+        if (tabEl) {
+            const trigger = new bootstrap.Tab(tabEl);
+            trigger.show();
+        }
+        dismissLiveAlert();
+    }
+
+    // Filter for All Orders tab
+    function filterAllOrdersTable() {
+        const input = document.getElementById("allOrdersSearchInput");
+        const filter = input.value.toLowerCase();
+        const table = document.getElementById("allOrdersTable");
+        if (!table) return;
+        const tr = table.getElementsByTagName("tr");
+
+        for (let i = 1; i < tr.length; i++) {
+            const text = tr[i].innerText.toLowerCase();
+            tr[i].style.display = text.indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+</script>
+}

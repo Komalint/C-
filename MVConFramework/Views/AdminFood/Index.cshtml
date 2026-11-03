@@ -208,9 +208,20 @@
                                     </div>
                                 </td>
                                 <td class="text-end">
-                                    <button type="button" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold text-dark shadow-sm" data-bs-toggle="modal" data-bs-target="#verifyModal_@k.StoreId">
-                                        <i class="fa-solid fa-clipboard-check me-1"></i> Conduct Audit
-                                    </button>
+                                    <div class="d-flex justify-content-end gap-2 align-items-center">
+                                        @using (Html.BeginForm("QuickAuthorize", "AdminFood", FormMethod.Post, new { @class = "d-inline m-0" }))
+                                        {
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="storeId" value="@k.StoreId" />
+                                            <input type="hidden" name="action" value="Approve" />
+                                            <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm" title="Authorize and activate kitchen immediately">
+                                                <i class="fa-solid fa-check me-1"></i> Authorize & Approve
+                                            </button>
+                                        }
+                                        <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3 fw-semibold shadow-sm text-dark" data-bs-toggle="modal" data-bs-target="#verifyModal_@k.StoreId">
+                                            <i class="fa-solid fa-clipboard-check me-1"></i> Audit Details
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
 

@@ -39,6 +39,26 @@ namespace MVConFramework.Controllers
             return RedirectToAction("Index");
         }
 
+        // POST: AdminFood/QuickAuthorize
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult QuickAuthorize(int storeId, string action)
+        {
+            int adminId = Session["UserId"] != null ? Convert.ToInt32(Session["UserId"]) : 1;
+            bool ok = _repo.QuickAuthorizeStore(storeId, action, adminId);
+            if (ok)
+            {
+                TempData["SuccessMessage"] = action.Equals("Approve", StringComparison.OrdinalIgnoreCase)
+                    ? "Restaurant authorized and activated successfully! The owner can now access their Kitchen Dashboard."
+                    : "Restaurant application has been rejected/held.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Could not update restaurant authorization.";
+            }
+            return RedirectToAction("Index");
+        }
+
         // GET: AdminFood/DatabaseHealth
         public ActionResult DatabaseHealth()
         {

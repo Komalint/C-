@@ -1,0 +1,307 @@
+@model MVConFramework.Models.Stores
+@{
+    ViewBag.Title = "Kitchen Details & Operating Hours - " + (Model != null ? Model.StoreName : "Restaurant");
+}
+
+<div class="py-4">
+
+    <!-- Top Breadcrumb & Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger rounded-pill px-3 py-1 fw-bold" style="background-color: #ff4757 !important;">
+                    <i class="fa-solid fa-gear me-1"></i> Kitchen Configuration
+                </span>
+                <span class="badge bg-light text-secondary border rounded-pill px-3 py-1 small">
+                    Store ID: #@Model.StoreId
+                </span>
+            </div>
+            <h2 class="fw-extrabold text-dark mb-1">
+                Edit Kitchen Profile, Timings & Banner
+            </h2>
+            <p class="text-muted small mb-0">
+                Update your restaurant's operating hours, street location, contact details, and custom kitchen banner images.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="@Url.Action("Index", "Restaurant")" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation Pills for Restaurant Operations -->
+    <div class="d-flex align-items-center gap-2 overflow-auto pb-3 mb-4">
+        <a href="@Url.Action("Index", "Restaurant")" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+            <i class="fa-solid fa-kitchen-set me-1"></i> Kitchen Orders Queue
+        </a>
+        <a href="@Url.Action("EditProfile", "Restaurant")" class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm" style="background-color: #ff4757; border-color: #ff4757;">
+            <i class="fa-solid fa-sliders me-1"></i> Kitchen Settings & Banner
+        </a>
+        <a href="@Url.Action("ManageMenu", "Restaurant")" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+            <i class="fa-solid fa-book-open me-1"></i> Menu Management (CRUD)
+        </a>
+        <a href="@Url.Action("Invoices", "Restaurant")" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+            <i class="fa-solid fa-file-invoice-dollar me-1"></i> Invoices & 7% Fee
+        </a>
+        <a href="@Url.Action("Reviews", "Restaurant")" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+            <i class="fa-solid fa-comments me-1"></i> Customer Reviews
+        </a>
+        <a href="@Url.Action("Certificate", "Restaurant")" class="btn btn-outline-warning text-dark rounded-pill px-4 py-2 fw-semibold">
+            <i class="fa-solid fa-award text-warning me-1"></i> Trust Certificate
+        </a>
+    </div>
+
+    @using (Html.BeginForm("EditProfile", "Restaurant", FormMethod.Post, new { enctype = "multipart/form-data" }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.StoreId)
+
+        <div class="row g-4">
+
+            <!-- Left Column: Banner & Logo Upload -->
+            <div class="col-lg-5">
+
+                <!-- Kitchen Banner Preview Card -->
+                <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden mb-4">
+                    <div class="position-relative" style="height: 190px; background-color: #0f172a;">
+                        <img id="bannerImgPreview" src="@(string.IsNullOrEmpty(Model.BannerUrl) ? "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200" : Model.BannerUrl)" 
+                             class="w-100 h-100" style="object-fit: cover; opacity: 0.88;" alt="Kitchen Banner" />
+                        <span class="badge bg-dark bg-opacity-75 text-white position-absolute top-0 end-0 m-3 px-3 py-1 rounded-pill">
+                            <i class="fa-solid fa-image me-1"></i> Current Banner
+                        </span>
+                        <div class="position-absolute bottom-0 start-0 m-3 d-flex align-items-center gap-2">
+                            <img id="logoImgPreview" src="@(string.IsNullOrEmpty(Model.ImageUrl) ? "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=120" : Model.ImageUrl)" 
+                                 class="rounded-circle border border-3 border-white shadow" style="width: 58px; height: 58px; object-fit: cover;" alt="Logo" />
+                            <div class="text-white drop-shadow">
+                                <h6 class="fw-bold mb-0 text-white">@Model.StoreName</h6>
+                                <small class="text-light opacity-75">📍 @Model.City, @Model.State</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4">
+                        <h6 class="fw-bold text-dark mb-2">
+                            <i class="fa-solid fa-cloud-arrow-up text-danger me-2"></i> Upload Kitchen Banner Image
+                        </h6>
+                        <p class="text-muted small mb-3">
+                            Upload a high-resolution photo of your kitchen, storefront, or signature dishes (JPG, PNG, WebP).
+                        </p>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-muted">Select Banner Image File from Computer:</label>
+                            <input type="file" name="bannerFile" id="bannerFileInput" class="form-control rounded-pill" accept="image/*" onchange="previewBannerFile(this)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-muted">Or Enter Custom Banner Image URL:</label>
+                            <input type="url" name="BannerUrl" id="bannerUrlInput" class="form-control rounded-pill" value="@Model.BannerUrl" placeholder="https://..." onchange="previewBannerUrl(this.value)" />
+                        </div>
+
+                        <!-- Sample Quick Banners -->
+                        <div class="mb-2">
+                            <label class="form-label small text-muted d-block mb-1">Quick Sample Food Banners:</label>
+                            <div class="d-flex flex-wrap gap-1">
+                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 small" onclick="setPresetBanner('https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=1200')">Biryani Banner</button>
+                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 small" onclick="setPresetBanner('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200')">Restaurant Interior</button>
+                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 small" onclick="setPresetBanner('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200')">Gourmet Dining</button>
+                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 small" onclick="setPresetBanner('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200')">Street Food / Kebabs</button>
+                            </div>
+                        </div>
+
+                        <hr class="my-4 text-muted opacity-25" />
+
+                        <!-- Store Logo / Thumbnail -->
+                        <h6 class="fw-bold text-dark mb-2">
+                            <i class="fa-solid fa-circle-user text-primary me-2"></i> Upload Kitchen Logo / Profile Picture
+                        </h6>
+                        <div class="mb-3">
+                            <input type="file" name="logoFile" class="form-control rounded-pill" accept="image/*" onchange="previewLogoFile(this)" />
+                        </div>
+                        <div>
+                            <label class="form-label small fw-semibold text-muted">Or Logo / Image URL:</label>
+                            <input type="url" name="ImageUrl" id="logoUrlInput" class="form-control rounded-pill" value="@Model.ImageUrl" placeholder="https://..." onchange="previewLogoUrl(this.value)" />
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Kitchen Identity, Timings & Location -->
+            <div class="col-lg-7">
+
+                <!-- Section 1: Operating Hours Card -->
+                <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="fw-bold text-dark mb-0">
+                            <i class="fa-regular fa-clock text-warning me-2 fs-5"></i> Daily Kitchen Operating Timings
+                        </h5>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-1 small fw-bold">
+                            <i class="fa-solid fa-circle-check me-1"></i> Order Acceptance Window
+                        </span>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        Customers within your state can place orders during these hours. Outside these hours, orders are placed in the scheduled queue.
+                    </p>
+
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-dark">Kitchen Opening Time:</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light rounded-start-pill border-end-0"><i class="fa-regular fa-sun text-warning"></i></span>
+                                <input type="text" name="OpeningTime" id="openingTimeInput" class="form-control rounded-end-pill border-start-0 fw-semibold" value="@(string.IsNullOrEmpty(Model.OpeningTime) ? "10:00 AM" : Model.OpeningTime)" placeholder="e.g. 10:00 AM" required />
+                            </div>
+                            <small class="text-muted" style="font-size: 0.72rem;">Morning opening / breakfast timing</small>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-dark">Kitchen Closing Time:</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light rounded-start-pill border-end-0"><i class="fa-solid fa-moon text-primary"></i></span>
+                                <input type="text" name="ClosingTime" id="closingTimeInput" class="form-control rounded-end-pill border-start-0 fw-semibold" value="@(string.IsNullOrEmpty(Model.ClosingTime) ? "11:00 PM" : Model.ClosingTime)" placeholder="e.g. 11:30 PM" required />
+                            </div>
+                            <small class="text-muted" style="font-size: 0.72rem;">Night last order acceptance timing</small>
+                        </div>
+                    </div>
+
+                    <!-- Timings Preset Buttons -->
+                    <div class="mt-3 pt-2 border-top">
+                        <span class="text-muted small me-2">Quick Operating Hours Presets:</span>
+                        <div class="d-inline-flex flex-wrap gap-1 mt-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2" onclick="setTimings('10:00 AM', '11:00 PM')">10:00 AM - 11:00 PM (Standard)</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2" onclick="setTimings('11:00 AM', '11:30 PM')">11:00 AM - 11:30 PM (Dinner Focus)</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2" onclick="setTimings('08:00 AM', '10:00 PM')">08:00 AM - 10:00 PM (All Day Cafe)</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2" onclick="setTimings('24 Hours', '24 Hours')">24/7 Open Kitchen</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Store Identity & Location Card -->
+                <div class="card border-0 rounded-4 shadow-sm p-4 bg-white mb-4">
+                    <h5 class="fw-bold text-dark mb-3">
+                        <i class="fa-solid fa-location-dot text-danger me-2 fs-5"></i> Kitchen Identity & Location Details
+                    </h5>
+
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-dark">Restaurant / Kitchen Name:</label>
+                            <input type="text" name="StoreName" class="form-control rounded-pill" value="@Model.StoreName" required />
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-dark">Store / Kitchen Type:</label>
+                            <select name="StoreType" class="form-select rounded-pill">
+                                <option value="Restaurant" @(Model.StoreType == "Restaurant" ? "selected" : "")>Fine Dine Restaurant</option>
+                                <option value="Cloud Kitchen" @(Model.StoreType == "Cloud Kitchen" ? "selected" : "")>Cloud Kitchen / Delivery Only</option>
+                                <option value="Cafe & Bakery" @(Model.StoreType == "Cafe & Bakery" ? "selected" : "")>Cafe & Bakery</option>
+                                <option value="Traditional Dhaba" @(Model.StoreType == "Traditional Dhaba" ? "selected" : "")>Traditional Dhaba / Heritage</option>
+                                <option value="Fast Food & Snacks" @(Model.StoreType == "Fast Food & Snacks" ? "selected" : "")>Fast Food & Snacks</option>
+                            </select>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-dark">Owner / Master Chef Name:</label>
+                            <input type="text" name="OwnerName" class="form-control rounded-pill" value="@Model.OwnerName" required />
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-dark">Cuisine Specialities:</label>
+                            <input type="text" name="Cuisine" class="form-control rounded-pill" value="@Model.Cuisine" placeholder="e.g. Mughlai, Biryani, North Indian" required />
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-dark">Contact Phone Number:</label>
+                            <input type="text" name="ContactNumber" class="form-control rounded-pill" value="@Model.ContactNumber" maxlength="10" required />
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-dark">Official Contact Email:</label>
+                            <input type="email" name="Email" class="form-control rounded-pill" value="@Model.Email" required />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-dark">Kitchen Doorstep Street Address:</label>
+                            <textarea name="Address" class="form-control rounded-4" rows="2" placeholder="Full shop / street address for rider pickup..." required>@Model.Address</textarea>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-dark">City:</label>
+                            <input type="text" name="City" class="form-control rounded-pill" value="@Model.City" required />
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-dark">State (Multi-Tenant Delivery Boundary):</label>
+                            <input type="text" name="State" class="form-control rounded-pill bg-light" value="@Model.State" readonly title="State is locked to maintain strict state food delivery compliance" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-dark">About Kitchen / Chef's Story:</label>
+                            <textarea name="Description" class="form-control rounded-4" rows="3" placeholder="Tell customers about your kitchen's cooking philosophy, hygiene, and signature ingredients...">@Model.Description</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button Area -->
+                <div class="d-flex align-items-center justify-content-between p-3 bg-white rounded-4 shadow-sm border">
+                    <span class="text-muted small">
+                        <i class="fa-solid fa-shield-check text-success me-1"></i> All changes are saved securely to your verified kitchen record.
+                    </span>
+                    <button type="submit" class="btn btn-danger rounded-pill px-5 py-2 fw-bold shadow" style="background-color: #ff4757; border-color: #ff4757;">
+                        <i class="fa-solid fa-floppy-disk me-2"></i> Save Kitchen Profile & Timings
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+</div>
+
+@section scripts {
+<script>
+    function previewBannerFile(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('bannerImgPreview').src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function previewBannerUrl(url) {
+        if (url && url.length > 5) {
+            document.getElementById('bannerImgPreview').src = url;
+        }
+    }
+
+    function setPresetBanner(url) {
+        document.getElementById('bannerUrlInput').value = url;
+        document.getElementById('bannerImgPreview').src = url;
+    }
+
+    function previewLogoFile(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('logoImgPreview').src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function previewLogoUrl(url) {
+        if (url && url.length > 5) {
+            document.getElementById('logoImgPreview').src = url;
+        }
+    }
+
+    function setTimings(opening, closing) {
+        document.getElementById('openingTimeInput').value = opening;
+        document.getElementById('closingTimeInput').value = closing;
+    }
+</script>
+}

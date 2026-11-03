@@ -8,6 +8,7 @@ namespace MVConFramework.Controllers
     public class AccountController : Controller
     {
         private readonly UserRepo _userRepo = new UserRepo();
+        private readonly FoodDeliveryRepo _foodRepo = new FoodDeliveryRepo();
 
         // GET: Account/Login
         [HttpGet]
@@ -107,6 +108,38 @@ namespace MVConFramework.Controllers
                 {
                     Session["UserDeliveryState"] = "Delhi";
                 }
+
+                // If logging in as Restaurant, bind their specific restaurant store
+                string effectiveRole = !string.IsNullOrWhiteSpace(model.LoginRole) ? model.LoginRole : user.Role;
+                if (effectiveRole.Equals("Restaurant", StringComparison.OrdinalIgnoreCase) || (user.Role != null && user.Role.Equals("Restaurant", StringComparison.OrdinalIgnoreCase)))
+                {
+                    var store = _foodRepo.GetStoreByOwnerUserId(user.UserId);
+                    if (store != null)
+                    {
+                        Session["RestaurantStoreId"] = store.StoreId;
+                        Session["RestaurantStoreName"] = store.StoreName;
+                        Session["RestaurantStoreCity"] = store.City;
+                        Session["RestaurantStoreState"] = store.State;
+                        Session["RestaurantVerificationStatus"] = store.VerificationStatus;
+                        Session["RestaurantIsActive"] = store.IsActive;
+
+                        // Check authorization: if pending Super Admin approval or not active, direct to pending approval page
+                        if (!store.IsActive || !store.VerificationStatus.Equals("Approved", StringComparison.OrdinalIgnoreCase))
+                        {
+                            TempData["InfoMessage"] = $"Your restaurant application for '{store.StoreName}' is currently pending Super Admin authorization.";
+                            return RedirectToAction("PendingApproval", "Restaurant");
+                        }
+                    }
+                    else
+                    {
+                        // Fallback to Royal Biryani House (Store 10)
+                        Session["RestaurantStoreId"] = 10;
+                        Session["RestaurantStoreName"] = "The Royal Biryani House";
+                        Session["RestaurantStoreCity"] = "Delhi";
+                        Session["RestaurantStoreState"] = "Delhi";
+                    }
+                }
+
                 Session["LoginTime"] = DateTime.Now.ToString("dd MMM yyyy, hh:mm tt");
 
                 TempData["SuccessMessage"] = $"Welcome back, {user.UserName}! Logged in as {(Session["LoginRole"] ?? user.Role)}.";
@@ -148,14 +181,19 @@ namespace MVConFramework.Controllers
 
         // GET: Account/Register
         [HttpGet]
-        public ActionResult Register()
+        public ActionResult Register(string role)
         {
             if (Session["UserId"] != null)
             {
                 return RedirectToRoleHome(Session["UserRole"] != null ? Session["UserRole"].ToString() : "User");
             }
 
-            return View(new RegisterViewModel());
+            var vm = new RegisterViewModel();
+            if (!string.IsNullOrWhiteSpace(role))
+            {
+                vm.Role = role;
+            }
+            return View(vm);
         }
 
         // POST: Account/Register
@@ -163,6 +201,28 @@ namespace MVConFramework.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Register(RegisterViewModel model)
         {
+            // Validate role-specific requirements
+            string effectiveRole = model.Role ?? "Customer";
+
+            if (effectiveRole.Equals("Restaurant", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(model.RestaurantName))
+                {
+                    ModelState.AddModelError("RestaurantName", "Restaurant / Kitchen Name is required for restaurant partners.");
+                }
+                if (string.IsNullOrWhiteSpace(model.RestaurantAddress))
+                {
+                    ModelState.AddModelError("RestaurantAddress", "Physical kitchen address is required for food safety audits.");
+                }
+            }
+            else if (effectiveRole.Equals("DeliveryAgent", StringComparison.OrdinalIgnoreCase) || effectiveRole.Equals("Rider", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(model.VehicleNumber))
+                {
+                    ModelState.AddModelError("VehicleNumber", "Vehicle registration number is required for delivery partners.");
+                }
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -170,16 +230,37 @@ namespace MVConFramework.Controllers
 
             try
             {
+                int newUserId;
                 string message;
-                bool isRegistered = _userRepo.RegisterUser(model, out message);
+                bool isRegistered = _userRepo.RegisterUser(model, out newUserId, out message);
 
                 if (isRegistered)
                 {
-                    TempData["SuccessMessage"] = !string.IsNullOrEmpty(message)
-                        ? message
-                        : "Registration successful! Please login with your credentials.";
+                    if (effectiveRole.Equals("Restaurant", StringComparison.OrdinalIgnoreCase))
+                    {
+                        int storeId;
+                        string storeMsg;
+                        _foodRepo.RegisterRestaurantStore(newUserId, model, out storeId, out storeMsg);
 
-                    return RedirectToAction("Login");
+                        TempData["SuccessMessage"] = "Restaurant application submitted! Your kitchen is currently pending Super Admin authorization. Please login to track your status.";
+                        return RedirectToAction("Login", new { role = "Restaurant" });
+                    }
+                    else if (effectiveRole.Equals("DeliveryAgent", StringComparison.OrdinalIgnoreCase) || effectiveRole.Equals("Rider", StringComparison.OrdinalIgnoreCase))
+                    {
+                        int agentId;
+                        string agentMsg;
+                        _foodRepo.RegisterDeliveryAgent(newUserId, model, out agentId, out agentMsg);
+
+                        TempData["SuccessMessage"] = "Delivery Partner registered successfully! Please login to begin taking delivery orders.";
+                        return RedirectToAction("Login", new { role = "DeliveryAgent" });
+                    }
+                    else
+                    {
+                        TempData["SuccessMessage"] = !string.IsNullOrEmpty(message)
+                            ? message
+                            : "Registration successful! Please login with your credentials.";
+                        return RedirectToAction("Login", new { role = "Customer" });
+                    }
                 }
                 else
                 {

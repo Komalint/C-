@@ -54,7 +54,14 @@ namespace MVConFramework.Models
         // 2. Register / Sign Up User
         public bool RegisterUser(RegisterViewModel model, out string message)
         {
+            int dummyId;
+            return RegisterUser(model, out dummyId, out message);
+        }
+
+        public bool RegisterUser(RegisterViewModel model, out int newUserId, out string message)
+        {
             message = string.Empty;
+            newUserId = 0;
 
             using (SqlConnection con = new SqlConnection(_cnStr))
             {
@@ -69,7 +76,12 @@ namespace MVConFramework.Models
                     cmd.Parameters.AddWithValue("@Gender", string.IsNullOrWhiteSpace(model.Gender) ? (object)DBNull.Value : model.Gender.Trim());
                     cmd.Parameters.AddWithValue("@City", string.IsNullOrWhiteSpace(model.City) ? (object)DBNull.Value : model.City.Trim());
                     cmd.Parameters.AddWithValue("@State", string.IsNullOrWhiteSpace(model.State) ? (object)DBNull.Value : model.State.Trim());
-                    cmd.Parameters.AddWithValue("@Role", string.IsNullOrWhiteSpace(model.Role) ? "User" : model.Role.Trim());
+
+                    string effectiveRole = model.Role ?? "User";
+                    if (effectiveRole.Equals("Customer", StringComparison.OrdinalIgnoreCase))
+                        effectiveRole = "User";
+
+                    cmd.Parameters.AddWithValue("@Role", effectiveRole);
 
                     SqlParameter pResult = new SqlParameter("@Result", SqlDbType.Int)
                     {
@@ -89,7 +101,12 @@ namespace MVConFramework.Models
                     int result = Convert.ToInt32(pResult.Value);
                     message = pMessage.Value != DBNull.Value ? pMessage.Value.ToString() : string.Empty;
 
-                    return result > 0;
+                    if (result > 0)
+                    {
+                        newUserId = result;
+                        return true;
+                    }
+                    return false;
                 }
             }
         }

@@ -95,28 +95,6 @@
             box-shadow: 0 2px 10px rgba(255, 71, 87, 0.35);
         }
 
-        /* Database Health Badge */
-        .db-health-pill {
-            background: rgba(16, 185, 129, 0.12);
-            border: 1px solid rgba(16, 185, 129, 0.35);
-            color: #10b981;
-            padding: 5px 12px;
-            border-radius: 30px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .db-health-pill .dot {
-            width: 7px;
-            height: 7px;
-            background-color: #10b981;
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 6px #10b981;
-        }
-
         /* Notification Badge */
         .notification-btn {
             position: relative;
@@ -150,13 +128,27 @@
 
         /* Notifications Dropdown Panel */
         .notification-menu {
-            width: 360px;
-            max-height: 440px;
-            overflow-y: auto;
-            border-radius: 14px;
-            box-shadow: 0 12px 35px rgba(0,0,0,0.18);
-            border: 1px solid #e2e8f0;
-            padding: 0;
+            position: absolute !important;
+            top: calc(100% + 10px) !important;
+            right: 0 !important;
+            left: auto !important;
+            width: 380px !important;
+            max-width: 90vw !important;
+            max-height: 480px !important;
+            overflow-y: auto !important;
+            background: #ffffff !important;
+            color: #1e293b !important;
+            border-radius: 16px !important;
+            box-shadow: 0 16px 45px rgba(0,0,0,0.28) !important;
+            border: 1px solid #e2e8f0 !important;
+            padding: 0 !important;
+            display: none;
+            z-index: 10000 !important;
+        }
+        .notification-menu.show {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
         }
         .notification-header {
             padding: 12px 16px;
@@ -210,208 +202,243 @@
 </head>
 <body>
 
-    <!-- Main Navigation Bar -->
+    @{
+        string rawRole = (Session["UserRole"] != null ? Session["UserRole"].ToString() : "").Trim();
+        string loginRole = (Session["LoginRole"] != null ? Session["LoginRole"].ToString() : rawRole).Trim();
+        string activeTab = ViewBag.ActiveTab != null ? ViewBag.ActiveTab.ToString() : "";
+        bool isRestaurant = loginRole.Equals("Restaurant", StringComparison.OrdinalIgnoreCase) || rawRole.Equals("Restaurant", StringComparison.OrdinalIgnoreCase);
+        bool isAdmin = loginRole.Equals("Admin", StringComparison.OrdinalIgnoreCase) || rawRole.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+        bool isRider = loginRole.Equals("DeliveryAgent", StringComparison.OrdinalIgnoreCase) || loginRole.Equals("Rider", StringComparison.OrdinalIgnoreCase) || rawRole.Equals("DeliveryAgent", StringComparison.OrdinalIgnoreCase) || rawRole.Equals("Rider", StringComparison.OrdinalIgnoreCase);
+        bool isCustomer = !isRestaurant && !isAdmin && !isRider;
+        bool isAuthenticated = Session["UserId"] != null;
+    }
+
+    <!-- Main Navigation Bar (Dedicated Role-Based Design) -->
     <nav class="navbar navbar-expand-lg navbar-dark main-nav sticky-top">
         <div class="container-fluid px-2 px-sm-3 px-xl-4">
 
-            <!-- Brand Logo -->
-            <a href="@Url.Action("Index", "Customer")" class="navbar-brand navbar-brand-food me-2 me-lg-3 flex-shrink-0">
-                <div class="brand-icon">
-                    <i class="fa-solid fa-utensils"></i>
-                </div>
-                <span>Food<span style="color: #ff4757;">Express</span></span>
-            </a>
+            @if (isRestaurant)
+            {
+                <!-- RESTAURANT PARTNER NAVBAR BRAND -->
+                <a href="@Url.Action("Index", "Restaurant")" class="navbar-brand navbar-brand-food me-2 me-lg-3 flex-shrink-0">
+                    <div class="brand-icon" style="background: linear-gradient(135deg, #ff6b81, #ff4757);">
+                        <i class="fa-solid fa-kitchen-set"></i>
+                    </div>
+                    <span>Food<span style="color: #ff4757;">Express</span> <span class="badge bg-danger rounded-pill px-2 py-1 ms-1 text-white fw-bold" style="font-size: 0.7rem; background-color: #ff4757 !important;">KITCHEN PARTNER</span></span>
+                </a>
+            }
+            else if (isAdmin)
+            {
+                <!-- ADMIN CONSOLE NAVBAR BRAND -->
+                <a href="@Url.Action("Index", "AdminFood")" class="navbar-brand navbar-brand-food me-2 me-lg-3 flex-shrink-0">
+                    <div class="brand-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <span>Food<span style="color: #3b82f6;">Express</span> <span class="badge bg-primary rounded-pill px-2 py-1 ms-1 text-white fw-bold" style="font-size: 0.7rem;">ADMIN CONSOLE</span></span>
+                </a>
+            }
+            else if (isRider)
+            {
+                <!-- DELIVERY FLEET NAVBAR BRAND -->
+                <a href="@Url.Action("Index", "DeliveryAgent")" class="navbar-brand navbar-brand-food me-2 me-lg-3 flex-shrink-0">
+                    <div class="brand-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        <i class="fa-solid fa-motorcycle"></i>
+                    </div>
+                    <span>Food<span style="color: #10b981;">Express</span> <span class="badge bg-success rounded-pill px-2 py-1 ms-1 text-white fw-bold" style="font-size: 0.7rem;">RIDER FLEET</span></span>
+                </a>
+            }
+            else
+            {
+                <!-- CUSTOMER / GUEST NAVBAR BRAND -->
+                <a href="@Url.Action("Index", "Customer")" class="navbar-brand navbar-brand-food me-2 me-lg-3 flex-shrink-0">
+                    <div class="brand-icon">
+                        <i class="fa-solid fa-utensils"></i>
+                    </div>
+                    <span>Food<span style="color: #ff4757;">Express</span></span>
+                </a>
+            }
 
             <!-- Mobile Toggle -->
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#foodNavbar" aria-controls="foodNavbar" aria-expanded="false" aria-label="Toggle navigation">
                 <i class="fa-solid fa-bars text-white"></i>
             </button>
 
-            <!-- Navbar Links -->
+            <!-- Navbar Links Container -->
             <div class="collapse navbar-collapse" id="foodNavbar">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1">
 
-                    <!-- Customer / Explore Food -->
-                    <li class="nav-item">
-                        <a class="nav-link nav-link-custom @(ViewBag.ActiveTab == "Customer" ? "active" : "")" href="@Url.Action("Index", "Customer")">
-                            <i class="fa-solid fa-bowl-food text-warning"></i>
-                            <span>Explore Food</span>
-                        </a>
-                    </li>
-
-                    <!-- Customer Orders -->
-                    <li class="nav-item">
-                        <a class="nav-link nav-link-custom" href="@Url.Action("MyOrders", "Customer")">
-                            <i class="fa-solid fa-receipt text-info"></i>
-                            <span>My Orders</span>
-                        </a>
-                    </li>
-
-                    @{
-                        string currentRole = (Session["UserRole"] != null ? Session["UserRole"].ToString() : "").Trim();
-                    }
-
-                    @if (currentRole.Equals("Restaurant", StringComparison.OrdinalIgnoreCase))
-                    {
-                        <!-- Active Restaurant Role Nav -->
+                @if (isRestaurant)
+                {
+                    <!-- DEDICATED RESTAURANT KITCHEN NAVIGATION LINKS ONLY -->
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1">
                         <li class="nav-item">
-                            <a class="nav-link nav-link-custom @(ViewBag.ActiveTab == "Restaurant" ? "active" : "")" href="@Url.Action("Index", "Restaurant")">
-                                <i class="fa-solid fa-kitchen-set text-danger"></i>
-                                <span>Kitchen Dashboard</span>
+                            <a class="nav-link nav-link-custom @(activeTab == "RestaurantOrders" || activeTab == "Restaurant" ? "active" : "")" href="@Url.Action("Index", "Restaurant")">
+                                <i class="fa-solid fa-fire text-danger"></i>
+                                <span>Kitchen Queue</span>
                             </a>
                         </li>
-                    }
-                    else if (currentRole.Equals("DeliveryAgent", StringComparison.OrdinalIgnoreCase) || currentRole.Equals("Rider", StringComparison.OrdinalIgnoreCase))
-                    {
-                        <!-- Active Delivery Partner Role Nav -->
                         <li class="nav-item">
-                            <a class="nav-link nav-link-custom @(ViewBag.ActiveTab == "DeliveryAgent" ? "active" : "")" href="@Url.Action("Index", "DeliveryAgent")">
-                                <i class="fa-solid fa-motorcycle text-success"></i>
-                                <span>Rider Portal</span>
+                            <a class="nav-link nav-link-custom @(activeTab == "RestaurantMenu" ? "active" : "")" href="@Url.Action("ManageMenu", "Restaurant")">
+                                <i class="fa-solid fa-book-open text-warning"></i>
+                                <span>Menu CRUD</span>
                             </a>
                         </li>
-                    }
-                    else if (currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
-                    {
-                        <!-- Active Admin Role Nav -->
                         <li class="nav-item">
-                            <a class="nav-link nav-link-custom @(ViewBag.ActiveTab == "Admin" ? "active" : "")" href="@Url.Action("Index", "AdminFood")">
+                            <a class="nav-link nav-link-custom @(activeTab == "RestaurantInvoices" ? "active" : "")" href="@Url.Action("Invoices", "Restaurant")">
+                                <i class="fa-solid fa-file-invoice-dollar text-success"></i>
+                                <span>Invoices & 7% Fee</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom @(activeTab == "RestaurantReviews" ? "active" : "")" href="@Url.Action("Reviews", "Restaurant")">
+                                <i class="fa-solid fa-comments text-info"></i>
+                                <span>Customer Reviews</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom @(activeTab == "RestaurantCert" ? "active" : "")" href="@Url.Action("Certificate", "Restaurant")">
+                                <i class="fa-solid fa-award text-warning"></i>
+                                <span>Trust Certificate</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom @(activeTab == "RestaurantSettings" ? "active" : "")" href="@Url.Action("EditProfile", "Restaurant")">
+                                <i class="fa-solid fa-sliders text-info"></i>
+                                <span>Kitchen Settings & Banner</span>
+                            </a>
+                        </li>
+                    </ul>
+                }
+                else if (isAdmin)
+                {
+                    <!-- DEDICATED ADMIN PORTAL NAVIGATION LINKS -->
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1">
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom @(activeTab == "Admin" ? "active" : "")" href="@Url.Action("Index", "AdminFood")">
                                 <i class="fa-solid fa-shield-halved text-primary"></i>
-                                <span>Admin Portal</span>
+                                <span>Admin Overview & Analytics</span>
                             </a>
                         </li>
-                    }
-
-                    <!-- Portals Dropdown for Seamless Access Across Roles & Demos -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link nav-link-custom dropdown-toggle text-secondary" href="#" id="portalsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fa-solid fa-layer-group"></i>
-                            <span>Portals</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-dark shadow" aria-labelledby="portalsDropdown">
-                            <li class="dropdown-header text-uppercase small text-muted">Role Dashboards</li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Customer")"><i class="fa-solid fa-bowl-food text-warning me-2"></i>Customer Experience</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Restaurant")"><i class="fa-solid fa-kitchen-set text-danger me-2"></i>Restaurant Partner</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "DeliveryAgent")"><i class="fa-solid fa-motorcycle text-success me-2"></i>Delivery Fleet (10 Active)</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "AdminFood")"><i class="fa-solid fa-shield-halved text-primary me-2"></i>Admin Portal (7% Fee & Safety)</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li class="dropdown-header text-uppercase small text-muted">Management & Legacy ERP</li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Stores")"><i class="fa-solid fa-store me-2"></i>Stores CRUD (Legacy)</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("OrderList", "Orders")"><i class="fa-solid fa-list-check me-2"></i>Orders List (Legacy)</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Dashboard")"><i class="fa-solid fa-chart-line me-2"></i>General Dashboard</a></li>
-                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#dbHealthModal"><i class="fa-solid fa-database text-success me-2"></i>Dual DB Status (2/2 Online)</a></li>
-                        </ul>
-                    </li>
-
-                </ul>
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom" href="@Url.Action("Index", "Stores")">
+                                <i class="fa-solid fa-store text-warning"></i>
+                                <span>Registered Stores</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom" href="@Url.Action("Index", "DeliveryAgent")">
+                                <i class="fa-solid fa-motorcycle text-success"></i>
+                                <span>Delivery Fleet (10 Active)</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom" href="@Url.Action("OrderList", "Orders")">
+                                <i class="fa-solid fa-list-check text-info"></i>
+                                <span>All Platform Orders</span>
+                            </a>
+                        </li>
+                    </ul>
+                }
+                else if (isRider)
+                {
+                    <!-- DEDICATED RIDER FLEET NAVIGATION LINKS -->
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1">
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom @(activeTab == "DeliveryAgent" ? "active" : "")" href="@Url.Action("Index", "DeliveryAgent")">
+                                <i class="fa-solid fa-motorcycle text-success"></i>
+                                <span>Rider Trips & Route</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom" href="@Url.Action("Index", "DeliveryAgent")">
+                                <i class="fa-solid fa-wallet text-warning"></i>
+                                <span>Earnings Wallet (&#8377;60/Trip)</span>
+                            </a>
+                        </li>
+                    </ul>
+                }
+                else
+                {
+                    <!-- DEDICATED CUSTOMER NAVIGATION LINKS -->
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1">
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom @(activeTab == "Customer" ? "active" : "")" href="@Url.Action("Index", "Customer")">
+                                <i class="fa-solid fa-bowl-food text-warning"></i>
+                                <span>Explore Food</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom" href="@Url.Action("MyOrders", "Customer")">
+                                <i class="fa-solid fa-receipt text-info"></i>
+                                <span>My Orders</span>
+                            </a>
+                        </li>
+                    </ul>
+                }
 
                 <!-- Right Utility Area -->
                 <div class="d-flex align-items-center gap-2 gap-md-3 mt-3 mt-lg-0 flex-shrink-0">
 
-                    <!-- Active Delivery State Dropdown -->
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-light rounded-pill px-2 px-sm-3 py-1 dropdown-toggle fw-semibold text-nowrap" type="button" id="navStateDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Switch Delivery State (Only restaurants in your state are visible)">
-                            <i class="fa-solid fa-location-dot text-danger me-1"></i>
-                            <span>@(Session["UserDeliveryState"] != null ? Session["UserDeliveryState"].ToString() : "Delhi")</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow" aria-labelledby="navStateDropdown">
-                            <li class="dropdown-header text-uppercase small text-muted">Delivery State Restriction</li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Customer", new { state = "Delhi" })">🏛️ Delhi</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Customer", new { state = "Gujarat" })">🌾 Gujarat</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Customer", new { state = "Maharashtra" })">🌊 Maharashtra</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Customer", new { state = "Rajasthan" })">🏰 Rajasthan</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Customer", new { state = "Uttar Pradesh" })">🕌 Uttar Pradesh</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- Database Health Indicator Modal Trigger -->
-                    <button type="button" class="btn p-0 border-0" data-bs-toggle="modal" data-bs-target="#dbHealthModal" title="Dual Database Connectivity Status: Online">
-                        <div class="db-health-pill py-1 px-2 text-nowrap">
-                            <span class="dot"></span>
-                            <span>DBs: 2/2</span>
+                    @if (isCustomer)
+                    {
+                        <!-- Active Delivery State Dropdown (Shown only to Customers) -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-light rounded-pill px-2 px-sm-3 py-1 dropdown-toggle fw-semibold text-nowrap" type="button" id="navStateDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Switch Delivery State (Only restaurants in your state are visible)">
+                                <i class="fa-solid fa-location-dot text-danger me-1"></i>
+                                <span>@(Session["UserDeliveryState"] != null ? Session["UserDeliveryState"].ToString() : "Delhi")</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow" aria-labelledby="navStateDropdown">
+                                <li class="dropdown-header text-uppercase small text-muted">Delivery State Restriction</li>
+                                <li><a class="dropdown-item" href="@Url.Action("Index", "Customer", new { state = "Delhi" })">🏛️ Delhi</a></li>
+                                <li><a class="dropdown-item" href="@Url.Action("Index", "Customer", new { state = "Gujarat" })">🌾 Gujarat</a></li>
+                                <li><a class="dropdown-item" href="@Url.Action("Index", "Customer", new { state = "Maharashtra" })">🌊 Maharashtra</a></li>
+                                <li><a class="dropdown-item" href="@Url.Action("Index", "Customer", new { state = "Rajasthan" })">🏰 Rajasthan</a></li>
+                                <li><a class="dropdown-item" href="@Url.Action("Index", "Customer", new { state = "Uttar Pradesh" })">🕌 Uttar Pradesh</a></li>
+                            </ul>
                         </div>
-                    </button>
+                    }
 
-                    <!-- Notifications Dropdown -->
-                    <div class="dropdown">
-                        <button class="notification-btn" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                    <!-- Notifications Dropdown (Live Real-Time Integration) -->
+                    <div class="dropdown flex-shrink-0 position-relative">
+                        <button type="button" class="notification-btn" id="notificationsDropdown" aria-expanded="false" title="Notifications">
                             <i class="fa-regular fa-bell"></i>
-                            <span class="notification-badge" id="navNotifCount">4</span>
+                            <span class="notification-badge" id="navNotifCount" style="display: none;">0</span>
                         </button>
-                        <div class="dropdown-menu dropdown-menu-end notification-menu p-0" aria-labelledby="notificationsDropdown">
+                        <div class="dropdown-menu dropdown-menu-end notification-menu p-0 shadow-lg" id="notificationsMenu" aria-labelledby="notificationsDropdown">
                             <div class="notification-header">
                                 <span class="d-flex align-items-center gap-2">
-                                    <i class="fa-solid fa-bell text-danger"></i> Notifications
+                                    <i class="fa-solid fa-bell text-danger"></i> Live Notifications
                                 </span>
-                                <span class="badge bg-danger rounded-pill" id="notifBadgeLabel">4 New</span>
+                                <span class="badge bg-danger rounded-pill" id="notifBadgeLabel">0 New</span>
                             </div>
                             <div id="notifListContainer">
-                                <div class="notification-item unread">
-                                    <div class="d-flex justify-content-between align-items-start mb-1">
-                                        <strong class="text-dark small"><i class="fa-solid fa-trophy text-warning me-1"></i> Trust Certificate Unlocked!</strong>
-                                        <span class="text-muted" style="font-size: 0.7rem;">Just now</span>
-                                    </div>
-                                    <p class="text-muted small mb-0">Royal Biryani completed 215 orders with 4.6★. Download certificate now!</p>
-                                </div>
-                                <div class="notification-item unread">
-                                    <div class="d-flex justify-content-between align-items-start mb-1">
-                                        <strong class="text-dark small"><i class="fa-solid fa-percent text-success me-1"></i> 7% Platform Fee Earned</strong>
-                                        <span class="text-muted" style="font-size: 0.7rem;">5m ago</span>
-                                    </div>
-                                    <p class="text-muted small mb-0">Platform fee collected on Mumbai & Delhi restaurant orders.</p>
-                                </div>
-                                <div class="notification-item">
-                                    <div class="d-flex justify-content-between align-items-start mb-1">
-                                        <strong class="text-dark small"><i class="fa-solid fa-motorcycle text-primary me-1"></i> 10 Delivery Riders Online</strong>
-                                        <span class="text-muted" style="font-size: 0.7rem;">15m ago</span>
-                                    </div>
-                                    <p class="text-muted small mb-0">All 10 Aadhaar-verified riders active across Delhi, Mumbai, Pune, Jaipur.</p>
-                                </div>
-                                <div class="notification-item">
-                                    <div class="d-flex justify-content-between align-items-start mb-1">
-                                        <strong class="text-dark small"><i class="fa-solid fa-shield-halved text-danger me-1"></i> Food Safety Audit</strong>
-                                        <span class="text-muted" style="font-size: 0.7rem;">1h ago</span>
-                                    </div>
-                                    <p class="text-muted small mb-0">Urban Wok kitchen in Delhi is pending FSSAI and Hygiene inspection verification.</p>
+                                <div class="p-4 text-center text-muted small">
+                                    <div class="spinner-border spinner-border-sm text-danger mb-2" role="status"></div>
+                                    <p class="mb-0">Loading recent notifications...</p>
                                 </div>
                             </div>
                             <div class="p-2 text-center bg-light border-top">
-                                <button class="btn btn-link btn-sm text-decoration-none text-danger fw-semibold" onclick="clearNotifs()">Mark all as read</button>
+                                <button type="button" class="btn btn-link btn-sm text-decoration-none text-danger fw-semibold" onclick="markAllNotificationsRead()">
+                                    <i class="fa-solid fa-check-double me-1"></i> Mark all as read
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- User Account / Session -->
-                    @if (Session["UserId"] != null)
+                    <!-- User Account & Direct Visible Logout -->
+                    @if (isAuthenticated)
                     {
-                        <div class="dropdown flex-shrink-0">
-                            <button class="btn btn-outline-light btn-sm dropdown-toggle rounded-pill px-3 py-1 d-flex align-items-center gap-2 text-nowrap" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa-solid fa-circle-user text-warning fs-6"></i>
-                                <span class="text-truncate" style="max-width: 100px;">@Session["UserName"]</span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userMenu">
-                                <li class="px-3 py-2 text-muted small border-bottom">
-                                    Signed in as<br />
-                                    <strong class="text-dark">@Session["UserEmail"]</strong><br />
-                                    <span class="badge bg-secondary">@(Session["UserRole"] ?? "User")</span>
-                                </li>
-                                <li><a class="dropdown-item" href="@Url.Action("MyOrders", "Customer")"><i class="fa-solid fa-clock-rotate-left me-2"></i>My Orders</a></li>
-                                @if (Session["UserRole"] != null && Session["UserRole"].ToString() == "Admin")
-                                {
-                                    <li><a class="dropdown-item" href="@Url.Action("Index", "AdminFood")"><i class="fa-solid fa-shield-halved me-2"></i>Admin Portal</a></li>
-                                }
-                                else if (Session["UserRole"] != null && Session["UserRole"].ToString() == "Restaurant")
-                                {
-                                    <li><a class="dropdown-item" href="@Url.Action("Index", "Restaurant")"><i class="fa-solid fa-kitchen-set me-2"></i>Restaurant Portal</a></li>
-                                }
-                                else if (Session["UserRole"] != null && Session["UserRole"].ToString() == "DeliveryAgent")
-                                {
-                                    <li><a class="dropdown-item" href="@Url.Action("Index", "DeliveryAgent")"><i class="fa-solid fa-motorcycle me-2"></i>Rider Portal</a></li>
-                                }
-                                <li><a class="dropdown-item" href="@Url.Action("Index", "Dashboard")"><i class="fa-solid fa-gauge me-2"></i>Dashboard</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="@Url.Action("Logout", "Account")"><i class="fa-solid fa-arrow-right-from-bracket me-2"></i>Logout</a></li>
-                            </ul>
+                        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                            <!-- Active User Pill Badge -->
+                            <div class="d-flex align-items-center bg-dark bg-opacity-75 border border-secondary border-opacity-50 rounded-pill px-2 px-sm-3 py-1 text-light small text-nowrap">
+                                <i class="fa-solid fa-circle-user text-warning me-1 me-sm-2 fs-6"></i>
+                                <span class="text-truncate fw-bold" style="max-width: 110px;">@Session["UserName"]</span>
+                            </div>
+
+                            <!-- PROMINENT DIRECT VISIBLE LOGOUT BUTTON -->
+                            <a href="@Url.Action("Logout", "Account")" class="btn btn-danger btn-sm rounded-pill px-3 py-1 fw-bold text-white shadow-sm d-inline-flex align-items-center gap-1 flex-shrink-0" style="background-color: #ff4757 !important; border-color: #ff4757 !important;" title="Sign out of FoodExpress">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                <span>Logout</span>
+                            </a>
                         </div>
                     }
                     else
@@ -429,8 +456,6 @@
                 </div>
 
             </div>
-        </div>
-    </nav>
         </div>
     </nav>
 
@@ -459,52 +484,6 @@
         @RenderBody()
     </main>
 
-    <!-- Database Health Modal -->
-    <div class="modal fade" id="dbHealthModal" tabindex="-1" aria-labelledby="dbHealthModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4">
-                <div class="modal-header bg-dark text-white rounded-top-4">
-                    <h5 class="modal-title d-flex align-items-center gap-2" id="dbHealthModalLabel">
-                        <i class="fa-solid fa-database text-warning"></i> Dual Database Connectivity Status
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <p class="text-muted small mb-3">
-                        The user highlighted that two databases were involved and one was missing. Both databases are now active, fully mapped, and operational on SQL Server!
-                    </p>
-
-                    <!-- DB 1: AssignmentDB -->
-                    <div class="card border rounded-3 p-3 mb-3 bg-light">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-bold text-dark"><i class="fa-solid fa-server text-primary me-2"></i>AssignmentDB (Primary Food & Store DB)</span>
-                            <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Online</span>
-                        </div>
-                        <ul class="list-unstyled small text-muted mb-0">
-                            <li><i class="fa-solid fa-angle-right text-success me-1"></i>Tables: <code>hra.Stores</code>, <code>hra.Orders</code>, <code>hra.MenuItems</code>, <code>hra.Reviews</code>, <code>hra.DeliveryAgents</code>, <code>dbo.UserTbl</code></li>
-                            <li><i class="fa-solid fa-angle-right text-success me-1"></i>Status: Connected via <code>sa</code> user on localhost</li>
-                        </ul>
-                    </div>
-
-                    <!-- DB 2: Practice -->
-                    <div class="card border rounded-3 p-3 bg-light">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-bold text-dark"><i class="fa-solid fa-database text-success me-2"></i>Practice DB (Previously Missing LMS DB)</span>
-                            <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Restored & Active</span>
-                        </div>
-                        <ul class="list-unstyled small text-muted mb-0">
-                            <li><i class="fa-solid fa-angle-right text-success me-1"></i>Tables: <code>LMS.Users</code>, <code>LMS.Courses</code>, <code>LMS.Payments</code>, <code>LMS.Reviews</code>, <code>LMS.QuizQuestions</code></li>
-                            <li><i class="fa-solid fa-angle-right text-success me-1"></i>Status: Restored and seeded with all stored procedures</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="modal-footer border-top-0 pt-0">
-                    <button type="button" class="btn btn-secondary rounded-pill btn-sm" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Footer -->
     <footer class="py-4 mt-5">
         <div class="container text-center">
@@ -530,11 +509,141 @@
             $(".alert").fadeOut("slow");
         }, 4000);
 
-        function clearNotifs() {
-            $("#navNotifCount").text("0").hide();
-            $("#notifBadgeLabel").text("0 New");
-            $(".notification-item.unread").removeClass("unread");
+        // Real-Time Notification Engine
+        function getEffectiveRole() {
+            const path = window.location.pathname.toLowerCase();
+            if (path.indexOf('/restaurant') >= 0) return 'Restaurant';
+            if (path.indexOf('/admin') >= 0) return 'Admin';
+            if (path.indexOf('/delivery') >= 0) return 'DeliveryAgent';
+            const sessRole = '@(Session["LoginRole"] ?? Session["UserRole"] ?? "")';
+            return sessRole ? sessRole : 'Customer';
         }
+
+        function loadRealtimeNotifications() {
+            const roleToQuery = getEffectiveRole();
+            $.ajax({
+                url: '@Url.Action("GetRecent", "Notification")',
+                type: 'GET',
+                data: { role: roleToQuery },
+                dataType: 'json',
+                success: function (data) {
+                    if (!data || !data.success) return;
+
+                    const countBadge = $("#navNotifCount");
+                    const labelBadge = $("#notifBadgeLabel");
+                    const container = $("#notifListContainer");
+
+                    if (data.unreadCount > 0) {
+                        countBadge.text(data.unreadCount).show();
+                        labelBadge.text(data.unreadCount + " New");
+                    } else {
+                        countBadge.hide();
+                        labelBadge.text("0 New");
+                    }
+
+                    if (data.notifications && data.notifications.length > 0) {
+                        let html = "";
+                        data.notifications.forEach(function (n) {
+                            let icon = "fa-solid fa-bell text-danger";
+                            if (n.NotificationType === "OrderUpdate") icon = "fa-solid fa-fire text-danger";
+                            else if (n.NotificationType === "Payment") icon = "fa-solid fa-percent text-success";
+                            else if (n.NotificationType === "System") icon = "fa-solid fa-award text-warning";
+                            else if (n.NotificationType === "Safety") icon = "fa-solid fa-shield-halved text-primary";
+
+                            html += `
+                            <div class="notification-item ${n.IsRead ? '' : 'unread'}" style="cursor: pointer;" onclick="markSingleNotifRead(${n.NotificationId}, this)">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <strong class="text-dark small"><i class="${icon} me-1"></i> ${escapeNotifHtml(n.Title)}</strong>
+                                    <span class="text-muted" style="font-size: 0.7rem;">${n.TimeAgo}</span>
+                                </div>
+                                <p class="text-muted small mb-0">${escapeNotifHtml(n.Message)}</p>
+                            </div>`;
+                        });
+                        container.html(html);
+                    } else {
+                        container.html('<div class="p-4 text-center text-muted small"><i class="fa-regular fa-bell-slash fs-4 d-block mb-2 text-secondary opacity-50"></i>No notifications yet. New updates will appear here in real time.</div>');
+                    }
+
+                    // If on Restaurant Dashboard, also sync the in-dashboard Kitchen Alerts tab
+                    const dashBadge = $("#dashNotifBadge");
+                    if (dashBadge.length) {
+                        dashBadge.text(data.unreadCount);
+                        dashBadge.attr("class", data.unreadCount > 0 ? "badge bg-danger rounded-pill ms-1" : "badge bg-secondary rounded-pill ms-1");
+                    }
+                    const dashTable = $("#dashNotifTableBody");
+                    if (dashTable.length && data.notifications) {
+                        if (data.notifications.length === 0) {
+                            dashTable.html('<tr><td colspan="5" class="text-center py-4 text-muted">No notifications recorded yet.</td></tr>');
+                        } else {
+                            let rows = "";
+                            data.notifications.forEach(function (n) {
+                                let badge = n.IsRead ? '<span class="badge bg-light text-secondary border">Read</span>' : '<span class="badge bg-danger">New Unread</span>';
+                                rows += `
+                                <tr class="${n.IsRead ? '' : 'table-danger bg-opacity-10'}">
+                                    <td>${badge}</td>
+                                    <td class="fw-bold">${escapeNotifHtml(n.Title)}</td>
+                                    <td>${escapeNotifHtml(n.Message)}</td>
+                                    <td class="small text-muted text-nowrap">${n.CreatedAt}</td>
+                                    <td>
+                                        ${n.IsRead ? '' : `<button type="button" class="btn btn-outline-danger btn-sm rounded-pill py-0 px-2" onclick="markSingleNotifRead(${n.NotificationId}, this)">Mark Read</button>`}
+                                    </td>
+                                </tr>`;
+                            });
+                            dashTable.html(rows);
+                        }
+                    }
+                }
+            });
+        }
+
+        function markSingleNotifRead(id, element) {
+            $.post('@Url.Action("MarkRead", "Notification")', { id: id }, function () {
+                $(element).removeClass("unread");
+                loadRealtimeNotifications();
+            });
+        }
+
+        function markAllNotificationsRead() {
+            $.post('@Url.Action("MarkAllRead", "Notification")', { role: getEffectiveRole() }, function () {
+                loadRealtimeNotifications();
+            });
+        }
+
+        function escapeNotifHtml(str) {
+            if (!str) return "";
+            return $("<div>").text(str).html();
+        }
+
+        // Initialize and bulletproof click toggle
+        $(document).ready(function () {
+            loadRealtimeNotifications();
+            setInterval(loadRealtimeNotifications, 4000);
+
+            // Click listener for bell icon
+            $(document).on('click', '#notificationsDropdown', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const $menu = $('#notificationsMenu');
+                const isShown = $menu.hasClass('show');
+                $('.dropdown-menu').not('#notificationsMenu').removeClass('show');
+                if (!isShown) {
+                    $menu.addClass('show');
+                    $(this).attr('aria-expanded', 'true');
+                    loadRealtimeNotifications();
+                } else {
+                    $menu.removeClass('show');
+                    $(this).attr('aria-expanded', 'false');
+                }
+            });
+
+            // Close when clicking outside
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('#notificationsDropdown, #notificationsMenu').length) {
+                    $('#notificationsMenu').removeClass('show');
+                    $('#notificationsDropdown').attr('aria-expanded', 'false');
+                }
+            });
+        });
     </script>
 
     @RenderSection("scripts", required: false)

@@ -1,116 +1,401 @@
 @model MVConFramework.ViewModels.RegisterViewModel
 
 @{
-    ViewBag.Title = "Register";
+    ViewBag.Title = "Create Your Account - FoodExpress";
 }
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
+<div class="py-5" style="background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); min-height: 85vh;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
 
-        <div class="col-md-6">
+                <!-- Main Registration Card -->
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white">
 
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0">Register</h4>
+                    <!-- Header -->
+                    <div class="card-header border-0 py-4 px-4 px-md-5 text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="badge bg-danger rounded-pill px-3 py-1 mb-2 fw-semibold text-uppercase tracking-wider" style="font-size: 0.72rem;">
+                                    <i class="fa-solid fa-user-plus me-1"></i> Join FoodExpress
+                                </span>
+                                <h3 class="fw-bold mb-1">Create an Account</h3>
+                                <p class="text-white-50 small mb-0">Select your role to get started with a customized portal experience.</p>
+                            </div>
+                            <div class="d-none d-sm-block text-end">
+                                <i class="fa-solid fa-bowl-food display-6 text-danger opacity-75"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4 p-md-5">
+
+                        @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { id = "registerForm" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.ValidationSummary(true, "", new { @class = "alert alert-danger rounded-3 small mb-4" })
+
+                            <!-- Hidden Role input managed by selector -->
+                            @Html.HiddenFor(m => m.Role, new { id = "hiddenRoleInput" })
+
+                            <!-- 1. Interactive Role Selector -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-dark small text-uppercase tracking-wider mb-2">
+                                    <i class="fa-solid fa-id-card-clip text-primary me-1"></i> I want to register as:
+                                </label>
+                                <div class="row g-3">
+
+                                    <!-- Customer Role Card -->
+                                    <div class="col-md-4">
+                                        <div class="role-selector-card p-3 rounded-4 border text-center cursor-pointer transition-all active-role"
+                                             id="roleCardCustomer" onclick="selectRole('Customer')">
+                                            <div class="icon-circle bg-primary bg-opacity-10 text-primary mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <i class="fa-solid fa-user fs-5"></i>
+                                            </div>
+                                            <div class="fw-bold text-dark">Customer</div>
+                                            <small class="text-muted d-block" style="font-size: 0.75rem;">Order gourmet food & track live</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Rider Role Card -->
+                                    <div class="col-md-4">
+                                        <div class="role-selector-card p-3 rounded-4 border text-center cursor-pointer transition-all"
+                                             id="roleCardRider" onclick="selectRole('DeliveryAgent')">
+                                            <div class="icon-circle bg-success bg-opacity-10 text-success mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <i class="fa-solid fa-motorcycle fs-5"></i>
+                                            </div>
+                                            <div class="fw-bold text-dark">Delivery Rider</div>
+                                            <small class="text-muted d-block" style="font-size: 0.75rem;">Deliver orders & earn ₹60/drop</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Restaurant Partner Role Card -->
+                                    <div class="col-md-4">
+                                        <div class="role-selector-card p-3 rounded-4 border text-center cursor-pointer transition-all"
+                                             id="roleCardRestaurant" onclick="selectRole('Restaurant')">
+                                            <div class="icon-circle bg-danger bg-opacity-10 text-danger mx-auto mb-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <i class="fa-solid fa-utensils fs-5"></i>
+                                            </div>
+                                            <div class="fw-bold text-dark">Restaurant Partner</div>
+                                            <small class="text-muted d-block" style="font-size: 0.75rem;">Kitchen dashboard & order sales</small>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- Role-Specific Banner Alert -->
+                            <div id="roleAlertRestaurant" class="alert alert-warning border-0 rounded-4 p-3 mb-4 shadow-sm d-none" style="background-color: #fffbeb; border-left: 4px solid #f59e0b !important;">
+                                <div class="d-flex align-items-start">
+                                    <i class="fa-solid fa-shield-halved text-warning fs-4 me-3 mt-1"></i>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1">Super Admin Authorization Required</h6>
+                                        <p class="small text-muted mb-0">
+                                            To maintain high food hygiene standards, newly registered kitchens are submitted to the <strong>Super Admin</strong> for verification. 
+                                            Upon Super Admin authorization, your kitchen goes live and you gain full access to manage your menu, review orders, and upload food safety certifications.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="roleAlertRider" class="alert alert-success border-0 rounded-4 p-3 mb-4 shadow-sm d-none" style="background-color: #f0fdf4; border-left: 4px solid #10b981 !important;">
+                                <div class="d-flex align-items-start">
+                                    <i class="fa-solid fa-route text-success fs-4 me-3 mt-1"></i>
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1">Earn On Every Delivery</h6>
+                                        <p class="small text-muted mb-0">
+                                            Register your vehicle details and start accepting orders across your operating city immediately upon login!
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Account Credentials Section -->
+                            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                                <i class="fa-solid fa-user-lock text-secondary me-2"></i>Account & Login Credentials
+                            </h6>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold text-muted" id="lblUserName">Full Name / Username *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-user"></i></span>
+                                        @Html.TextBoxFor(m => m.UserName, new { @class = "form-control border-start-0 ps-0", placeholder = "e.g. Rahul Sharma" })
+                                    </div>
+                                    @Html.ValidationMessageFor(m => m.UserName, "", new { @class = "text-danger small" })
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold text-muted">Email Address *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-envelope"></i></span>
+                                        @Html.TextBoxFor(m => m.Email, new { @class = "form-control border-start-0 ps-0", type = "email", placeholder = "name@example.com" })
+                                    </div>
+                                    @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold text-muted">Password *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-lock"></i></span>
+                                        @Html.PasswordFor(m => m.Password, new { @class = "form-control border-start-0 ps-0", placeholder = "Minimum 6 characters" })
+                                    </div>
+                                    @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger small" })
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold text-muted">Confirm Password *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-check-double"></i></span>
+                                        @Html.PasswordFor(m => m.ConfirmPassword, new { @class = "form-control border-start-0 ps-0", placeholder = "Re-enter password" })
+                                    </div>
+                                    @Html.ValidationMessageFor(m => m.ConfirmPassword, "", new { @class = "text-danger small" })
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold text-muted">Phone Number *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-phone"></i></span>
+                                        @Html.TextBoxFor(m => m.PhoneNumber, new { @class = "form-control border-start-0 ps-0", placeholder = "10-digit mobile number", maxlength = "10" })
+                                    </div>
+                                    @Html.ValidationMessageFor(m => m.PhoneNumber, "", new { @class = "text-danger small" })
+                                </div>
+
+                                <div class="col-md-6" id="fieldGender">
+                                    <label class="form-label small fw-semibold text-muted">Gender</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-venus-mars"></i></span>
+                                        @Html.DropDownListFor(m => m.Gender, new List<SelectListItem>
+                                        {
+                                            new SelectListItem { Text = "-- Select Gender --", Value = "" },
+                                            new SelectListItem { Text = "Male", Value = "Male" },
+                                            new SelectListItem { Text = "Female", Value = "Female" },
+                                            new SelectListItem { Text = "Other", Value = "Other" }
+                                        }, new { @class = "form-select border-start-0 ps-0" })
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. Operating Location -->
+                            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                                <i class="fa-solid fa-location-dot text-danger me-2"></i>Operating Location
+                            </h6>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold text-muted">City *</label>
+                                    @Html.DropDownListFor(m => m.City, new List<SelectListItem>
+                                    {
+                                        new SelectListItem { Text = "Delhi", Value = "Delhi" },
+                                        new SelectListItem { Text = "Mumbai", Value = "Mumbai" },
+                                        new SelectListItem { Text = "Pune", Value = "Pune" },
+                                        new SelectListItem { Text = "Jaipur", Value = "Jaipur" },
+                                        new SelectListItem { Text = "Lucknow", Value = "Lucknow" }
+                                    }, new { @class = "form-select rounded-3" })
+                                    @Html.ValidationMessageFor(m => m.City, "", new { @class = "text-danger small" })
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold text-muted">State *</label>
+                                    @Html.DropDownListFor(m => m.State, new List<SelectListItem>
+                                    {
+                                        new SelectListItem { Text = "Delhi", Value = "Delhi" },
+                                        new SelectListItem { Text = "Maharashtra", Value = "Maharashtra" },
+                                        new SelectListItem { Text = "Rajasthan", Value = "Rajasthan" },
+                                        new SelectListItem { Text = "Uttar Pradesh", Value = "Uttar Pradesh" },
+                                        new SelectListItem { Text = "Gujarat", Value = "Gujarat" }
+                                    }, new { @class = "form-select rounded-3" })
+                                    @Html.ValidationMessageFor(m => m.State, "", new { @class = "text-danger small" })
+                                </div>
+                            </div>
+
+                            <!-- 4. Restaurant Partner Specific Fields -->
+                            <div id="sectionRestaurant" class="d-none">
+                                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                                    <i class="fa-solid fa-store text-danger me-2"></i>Restaurant & Kitchen Profile
+                                </h6>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-7">
+                                        <label class="form-label small fw-semibold text-muted">Restaurant / Kitchen Name *</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-shop"></i></span>
+                                            @Html.TextBoxFor(m => m.RestaurantName, new { @class = "form-control border-start-0 ps-0", placeholder = "e.g. Royal Mughlai Kitchen" })
+                                        </div>
+                                        @Html.ValidationMessageFor(m => m.RestaurantName, "", new { @class = "text-danger small" })
+                                    </div>
+
+                                    <div class="col-md-5">
+                                        <label class="form-label small fw-semibold text-muted">Establishment Type</label>
+                                        @Html.DropDownListFor(m => m.StoreType, new List<SelectListItem>
+                                        {
+                                            new SelectListItem { Text = "Fine Dine Restaurant", Value = "Restaurant" },
+                                            new SelectListItem { Text = "Cloud Kitchen / Dark Kitchen", Value = "Cloud Kitchen" },
+                                            new SelectListItem { Text = "Bakery & Confectionery", Value = "Bakery" },
+                                            new SelectListItem { Text = "Cafe & Bistro", Value = "Cafe" },
+                                            new SelectListItem { Text = "Traditional Sweet Shop", Value = "Sweet Shop" }
+                                        }, new { @class = "form-select rounded-3" })
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-muted">Primary Cuisine *</label>
+                                        @Html.DropDownListFor(m => m.Cuisine, new List<SelectListItem>
+                                        {
+                                            new SelectListItem { Text = "North Indian & Mughlai", Value = "North Indian" },
+                                            new SelectListItem { Text = "South Indian & Dosa", Value = "South Indian" },
+                                            new SelectListItem { Text = "Biryani & Kebabs", Value = "Biryani" },
+                                            new SelectListItem { Text = "Gujarati & Rajasthani Thali", Value = "Thali" },
+                                            new SelectListItem { Text = "Chinese & Asian Wok", Value = "Chinese" },
+                                            new SelectListItem { Text = "Fast Food & Rolls", Value = "Fast Food" },
+                                            new SelectListItem { Text = "Multi-Cuisine Gourmet", Value = "Multi-Cuisine" }
+                                        }, new { @class = "form-select rounded-3" })
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-muted">FSSAI License No. (If Available)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-file-contract"></i></span>
+                                            @Html.TextBoxFor(m => m.FssaiLicenseNo, new { @class = "form-control border-start-0 ps-0", placeholder = "14-digit FSSAI or leave blank if in-process" })
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label small fw-semibold text-muted">Kitchen Physical Address *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-map-pin"></i></span>
+                                        @Html.TextBoxFor(m => m.RestaurantAddress, new { @class = "form-control border-start-0 ps-0", placeholder = "Shop/Unit No, Street, Commercial Complex, Area" })
+                                    </div>
+                                    @Html.ValidationMessageFor(m => m.RestaurantAddress, "", new { @class = "text-danger small" })
+                                    <small class="text-muted">Required by Super Admin for on-site hygiene compliance checks.</small>
+                                </div>
+                            </div>
+
+                            <!-- 5. Delivery Rider Specific Fields -->
+                            <div id="sectionRider" class="d-none">
+                                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                                    <i class="fa-solid fa-motorcycle text-success me-2"></i>Rider & Vehicle Details
+                                </h6>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-muted">Delivery Vehicle Type *</label>
+                                        @Html.DropDownListFor(m => m.VehicleType, new List<SelectListItem>
+                                        {
+                                            new SelectListItem { Text = "Motorcycle (Petrol)", Value = "Motorcycle" },
+                                            new SelectListItem { Text = "Scooter (Gearless)", Value = "Scooter" },
+                                            new SelectListItem { Text = "Electric 2-Wheeler (EV)", Value = "Electric Bike" },
+                                            new SelectListItem { Text = "Bicycle / Cycle", Value = "Bicycle" }
+                                        }, new { @class = "form-select rounded-3" })
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold text-muted">Vehicle Registration Number *</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-id-badge"></i></span>
+                                            @Html.TextBoxFor(m => m.VehicleNumber, new { @class = "form-control border-start-0 ps-0", placeholder = "e.g. DL-01-AB-1234" })
+                                        </div>
+                                        @Html.ValidationMessageFor(m => m.VehicleNumber, "", new { @class = "text-danger small" })
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label small fw-semibold text-muted">Aadhaar Number / Government ID</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="fa-solid fa-fingerprint"></i></span>
+                                        @Html.TextBoxFor(m => m.AadhaarNumber, new { @class = "form-control border-start-0 ps-0", placeholder = "12-digit Aadhaar Number" })
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="mt-4 pt-2">
+                                <button type="submit" class="btn btn-danger w-100 py-3 rounded-pill fw-bold fs-6 shadow-sm" id="btnSubmitRegister">
+                                    <i class="fa-solid fa-check me-2"></i>Create Customer Account
+                                </button>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <span class="text-muted small">Already have an account?</span>
+                                <a href="@Url.Action("Login", "Account")" class="text-danger fw-bold small text-decoration-none ms-1">
+                                    Log in here <i class="fa-solid fa-arrow-right-long ms-1"></i>
+                                </a>
+                            </div>
+                        }
+
+                    </div>
                 </div>
 
-                <div class="card-body">
-
-                    @using (Html.BeginForm("Register", "Account", FormMethod.Post))
-                    {
-                        @Html.AntiForgeryToken()
-
-                        @Html.ValidationSummary(true, "", new { @class = "text-danger mb-3" })
-
-                        <div class="mb-3">
-                            @Html.LabelFor(m => m.UserName)
-                            @Html.TextBoxFor(m => m.UserName,
-                                new { @class = "form-control" })
-                            @Html.ValidationMessageFor(m => m.UserName, "",
-                                new { @class = "text-danger" })
-                        </div>
-
-                        <div class="mb-3">
-                            @Html.LabelFor(m => m.Email)
-                            @Html.TextBoxFor(m => m.Email,
-                                new { @class = "form-control", type = "email" })
-                            @Html.ValidationMessageFor(m => m.Email, "",
-                                new { @class = "text-danger" })
-                        </div>
-
-                        <div class="mb-3">
-                            @Html.LabelFor(m => m.Password)
-                            @Html.PasswordFor(m => m.Password,
-                                new { @class = "form-control" })
-                            @Html.ValidationMessageFor(m => m.Password, "",
-                                new { @class = "text-danger" })
-                        </div>
-
-                        <div class="mb-3">
-                            @Html.LabelFor(m => m.ConfirmPassword)
-                            @Html.PasswordFor(m => m.ConfirmPassword,
-                                new { @class = "form-control" })
-                            @Html.ValidationMessageFor(m => m.ConfirmPassword, "",
-                                new { @class = "text-danger" })
-                        </div>
-
-                        <div class="mb-3">
-                            @Html.LabelFor(m => m.PhoneNumber)
-                            @Html.TextBoxFor(m => m.PhoneNumber,
-                                new { @class = "form-control" })
-                            @Html.ValidationMessageFor(m => m.PhoneNumber, "",
-                                new { @class = "text-danger" })
-                        </div>
-
-                        <div class="mb-3">
-                            @Html.LabelFor(m => m.Gender)
-                            @Html.DropDownListFor(m => m.Gender,
-                                new List<SelectListItem>
-                                {
-                                    new SelectListItem { Text = "-- Select Gender --", Value = "" },
-                                    new SelectListItem { Text = "Female", Value = "Female" },
-                                    new SelectListItem { Text = "Male", Value = "Male" },
-                                    new SelectListItem { Text = "Other", Value = "Other" }
-                                },
-                                new { @class = "form-control" })
-                            @Html.ValidationMessageFor(m => m.Gender, "",
-                                new { @class = "text-danger" })
-                        </div>
-
-                        <div class="mb-3">
-                            @Html.LabelFor(m => m.City)
-                            @Html.TextBoxFor(m => m.City,
-                                new { @class = "form-control" })
-                            @Html.ValidationMessageFor(m => m.City, "",
-                                new { @class = "text-danger" })
-                        </div>
-
-                        <div class="mb-3">
-                            @Html.LabelFor(m => m.State)
-                            @Html.TextBoxFor(m => m.State,
-                                new { @class = "form-control" })
-                            @Html.ValidationMessageFor(m => m.State, "",
-                                new { @class = "text-danger" })
-                        </div>
-
-                        <button type="submit" class="btn btn-success w-100">
-                            Register
-                        </button>
-                    }
-
-                </div>
-
-                <div class="card-footer text-center">
-                    Already have an account?
-                    @Html.ActionLink("Login", "Login", "Account")
-                </div>
             </div>
-
         </div>
-
     </div>
 </div>
 
-@section Scripts{
-    @Scripts.Render("~/bundles/jqueryval")
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    .transition-all {
+        transition: all 0.25s ease-in-out;
+    }
+    .role-selector-card {
+        background-color: #f8fafc;
+        border-color: #e2e8f0 !important;
+    }
+    .role-selector-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+    .role-selector-card.active-role {
+        border-color: #ef4444 !important;
+        background-color: #fef2f2 !important;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.15);
+    }
+</style>
+
+@section scripts {
+    <script>
+        function selectRole(role) {
+            $("#hiddenRoleInput").val(role);
+
+            // Update UI cards
+            $(".role-selector-card").removeClass("active-role");
+            $("#sectionRestaurant").addClass("d-none");
+            $("#sectionRider").addClass("d-none");
+            $("#roleAlertRestaurant").addClass("d-none");
+            $("#roleAlertRider").addClass("d-none");
+
+            if (role === "Restaurant") {
+                $("#roleCardRestaurant").addClass("active-role");
+                $("#sectionRestaurant").removeClass("d-none");
+                $("#roleAlertRestaurant").removeClass("d-none");
+                $("#lblUserName").text("Owner Full Name *");
+                $("#btnSubmitRegister").html('<i class="fa-solid fa-utensils me-2"></i>Register Restaurant Partner (Submit for Super Admin Review)');
+            } else if (role === "DeliveryAgent" || role === "Rider") {
+                $("#roleCardRider").addClass("active-role");
+                $("#sectionRider").removeClass("d-none");
+                $("#roleAlertRider").removeClass("d-none");
+                $("#lblUserName").text("Rider Full Name *");
+                $("#btnSubmitRegister").html('<i class="fa-solid fa-motorcycle me-2"></i>Register Delivery Partner');
+            } else {
+                $("#roleCardCustomer").addClass("active-role");
+                $("#lblUserName").text("Full Name / Username *");
+                $("#btnSubmitRegister").html('<i class="fa-solid fa-user-plus me-2"></i>Create Customer Account');
+            }
+        }
+
+        // Initialize based on Model.Role or URL query
+        $(document).ready(function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramRole = urlParams.get('role');
+            const initialRole = paramRole || '@Model.Role' || 'Customer';
+            selectRole(initialRole);
+        });
+    </script>
 }
