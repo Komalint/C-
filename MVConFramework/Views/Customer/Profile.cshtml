@@ -1,0 +1,154 @@
+@model MVConFramework.ViewModels.UserProfileViewModel
+@{
+    ViewBag.Title = "My Profile & Delivery Address - FoodExpress";
+}
+
+<div class="py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8">
+
+            <!-- Profile Header Card -->
+            <div class="card border-0 rounded-4 shadow-sm p-4 mb-4 bg-white position-relative overflow-hidden">
+                <div class="position-absolute top-0 start-0 end-0" style="height: 5px; background: linear-gradient(90deg, #ff4757, #f59e0b);"></div>
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-danger bg-opacity-10 text-danger rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                            <i class="fa-solid fa-user-gear fs-3" style="color: #ff4757;"></i>
+                        </div>
+                        <div>
+                            <span class="badge bg-danger rounded-pill px-3 py-1 mb-1" style="background-color: #ff4757 !important;">
+                                <i class="fa-solid fa-shield-check me-1"></i> Verified Customer Account
+                            </span>
+                            <h3 class="fw-extrabold text-dark mb-0">Customer Profile &amp; Address</h3>
+                            <small class="text-muted">Manage your personal contact info and exact doorstep delivery coordinates</small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a href="@Url.Action("MyOrders", "Customer")" class="btn btn-outline-secondary rounded-pill px-3 py-2 btn-sm fw-semibold">
+                            <i class="fa-solid fa-receipt me-1 text-info"></i> My Orders
+                        </a>
+                        <a href="@Url.Action("Index", "Customer")" class="btn btn-danger rounded-pill px-3 py-2 btn-sm fw-bold shadow-sm" style="background-color: #ff4757; border-color: #ff4757;">
+                            <i class="fa-solid fa-utensils me-1"></i> Order Food
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile & Address Form -->
+            @using (Html.BeginForm("Profile", "Customer", FormMethod.Post, new { @class = "needs-validation" }))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.UserId)
+
+                if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger rounded-4 shadow-sm p-3 mb-4">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                        <strong>Please correct the following errors:</strong>
+                        @Html.ValidationSummary(false, "", new { @class = "mb-0 mt-2 text-danger small" })
+                    </div>
+                }
+
+                <!-- Section 1: Contact Information -->
+                <div class="card border-0 rounded-4 shadow-sm p-4 mb-4 bg-white">
+                    <div class="d-flex align-items-center gap-2 mb-3 border-bottom pb-2">
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-circle p-2">
+                            <i class="fa-solid fa-id-card"></i>
+                        </span>
+                        <h5 class="fw-bold mb-0 text-dark">Personal Information</h5>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Full Name <span class="text-danger">*</span></label>
+                            @Html.TextBoxFor(m => m.UserName, new { @class = "form-control rounded-3", placeholder = "Enter full name", required = "required" })
+                            @Html.ValidationMessageFor(m => m.UserName, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Email Address <span class="text-danger">*</span></label>
+                            @Html.TextBoxFor(m => m.Email, new { @class = "form-control rounded-3 bg-light", @readonly = "readonly", title = "Email is tied to your account login" })
+                            <small class="text-muted" style="font-size: 0.74rem;"><i class="fa-solid fa-lock me-1"></i> Primary login email</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Phone Number (For Delivery Updates) <span class="text-danger">*</span></label>
+                            @Html.TextBoxFor(m => m.PhoneNumber, new { @class = "form-control rounded-3", placeholder = "10-digit mobile number", maxlength = "10", required = "required" })
+                            @Html.ValidationMessageFor(m => m.PhoneNumber, "", new { @class = "text-danger small" })
+                            <small class="text-muted" style="font-size: 0.74rem;">Riders call this number to coordinate doorstep delivery</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Gender</label>
+                            @Html.DropDownListFor(m => m.Gender, new SelectList(new[] { "Male", "Female", "Other" }, Model.Gender), "-- Select Gender --", new { @class = "form-select rounded-3" })
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Exact Doorstep Delivery Address -->
+                <div class="card border-0 rounded-4 shadow-sm p-4 mb-4 bg-white">
+                    <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-danger bg-opacity-10 text-danger rounded-circle p-2" style="color: #ff4757 !important;">
+                                <i class="fa-solid fa-location-dot"></i>
+                            </span>
+                            <h5 class="fw-bold mb-0 text-dark">Exact Delivery Address</h5>
+                        </div>
+                        <span class="badge bg-warning text-dark rounded-pill px-3 py-1 font-monospace" style="font-size: 0.72rem;">
+                            <i class="fa-solid fa-circle-exclamation me-1"></i> Mandatory for Food Orders
+                        </span>
+                    </div>
+
+                    <div class="alert alert-light border rounded-3 p-3 mb-3 small text-muted">
+                        <i class="fa-solid fa-info-circle text-primary me-1"></i>
+                        A city and state alone are not sufficient to place an order. Please specify your <strong>exact flat/house number, apartment/society, and landmark</strong> so our delivery partners reach your exact doorstep.
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Flat / House No., Apartment &amp; Street / Area <span class="text-danger">*</span></label>
+                            @Html.TextBoxFor(m => m.AddressLine, new { @class = "form-control rounded-3", placeholder = "e.g. Flat 402, Sunshine Heights, 12th Main Road", required = "required" })
+                            @Html.ValidationMessageFor(m => m.AddressLine, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Landmark / Locality</label>
+                            @Html.TextBoxFor(m => m.Landmark, new { @class = "form-control rounded-3", placeholder = "e.g. Near Apollo Pharmacy, Opp. City Mall" })
+                            <small class="text-muted" style="font-size: 0.74rem;">Helps the rider locate your building faster</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Delivery City <span class="text-danger">*</span></label>
+                            @Html.TextBoxFor(m => m.City, new { @class = "form-control rounded-3", placeholder = "e.g. Delhi, Ahmedabad, Mumbai, Jaipur", required = "required" })
+                            @Html.ValidationMessageFor(m => m.City, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Delivery State (State Food Policy) <span class="text-danger">*</span></label>
+                            @Html.DropDownListFor(m => m.State, new SelectList(new[] { "Delhi", "Gujarat", "Maharashtra", "Rajasthan", "Uttar Pradesh" }, Model.State), new { @class = "form-select rounded-3 fw-bold", required = "required" })
+                            <small class="text-muted" style="font-size: 0.74rem;">You can only order from restaurants within your selected state</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Pincode <span class="text-danger">*</span></label>
+                            @Html.TextBoxFor(m => m.Pincode, new { @class = "form-control rounded-3", placeholder = "6-digit postal code", maxlength = "6", required = "required" })
+                            @Html.ValidationMessageFor(m => m.Pincode, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="@Url.Action("Index", "Customer")" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-danger rounded-pill px-5 py-2 fw-bold shadow-sm" style="background-color: #ff4757; border-color: #ff4757;">
+                        <i class="fa-solid fa-floppy-disk me-2"></i> Save Profile &amp; Address
+                    </button>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>

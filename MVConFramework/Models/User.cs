@@ -26,6 +26,9 @@ namespace MVConFramework.Models
         public string Gender { get; set; }
         public string City { get; set; }
         public string State { get; set; }
+        public string AddressLine { get; set; }
+        public string Landmark { get; set; }
+        public string Pincode { get; set; }
         public string Role { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedDate { get; set; }

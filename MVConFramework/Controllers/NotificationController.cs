@@ -19,6 +19,13 @@ namespace MVConFramework.Controllers
             }
 
             int? userId = Session["UserId"] != null ? (int?)Convert.ToInt32(Session["UserId"]) : null;
+
+            // Unauthenticated Customer Guard: Guests have no notifications
+            if (role.Equals("Customer", StringComparison.OrdinalIgnoreCase) && !userId.HasValue)
+            {
+                return Json(new { success = true, unreadCount = 0, notifications = new object[0] }, JsonRequestBehavior.AllowGet);
+            }
+
             int? storeId = Session["RestaurantStoreId"] != null ? (int?)Convert.ToInt32(Session["RestaurantStoreId"])
                          : (Session["CurrentRestaurantId"] != null ? (int?)Convert.ToInt32(Session["CurrentRestaurantId"]) : null);
 
@@ -37,6 +44,15 @@ namespace MVConFramework.Controllers
             }
 
             int? agentId = Session["CurrentAgentId"] != null ? (int?)Convert.ToInt32(Session["CurrentAgentId"]) : null;
+            if (!agentId.HasValue && userId.HasValue && (role.Equals("DeliveryAgent", StringComparison.OrdinalIgnoreCase) || role.Equals("Rider", StringComparison.OrdinalIgnoreCase)))
+            {
+                var ag = _repo.GetDeliveryAgentByUserId(userId.Value);
+                if (ag != null)
+                {
+                    agentId = ag.AgentId;
+                    Session["CurrentAgentId"] = ag.AgentId;
+                }
+            }
 
             var list = _repo.GetNotifications(role, userId, storeId, agentId);
 
@@ -78,6 +94,13 @@ namespace MVConFramework.Controllers
             }
 
             int? userId = Session["UserId"] != null ? (int?)Convert.ToInt32(Session["UserId"]) : null;
+
+            // Unauthenticated Customer Guard: Guests have no notifications
+            if (role.Equals("Customer", StringComparison.OrdinalIgnoreCase) && !userId.HasValue)
+            {
+                return Json(new { success = true, unreadCount = 0, notifications = new object[0] }, JsonRequestBehavior.AllowGet);
+            }
+
             int? storeId = Session["RestaurantStoreId"] != null ? (int?)Convert.ToInt32(Session["RestaurantStoreId"])
                          : (Session["CurrentRestaurantId"] != null ? (int?)Convert.ToInt32(Session["CurrentRestaurantId"]) : null);
 

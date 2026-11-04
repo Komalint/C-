@@ -401,8 +401,23 @@
                                                 </small>
                                             </td>
                                             <td>
-                                                <span class="text-dark fw-semibold small d-block text-truncate" style="max-width: 200px;" title="@o.ProductName">@o.ProductName</span>
-                                                <span class="badge bg-light text-dark border">@o.Quantity item(s)</span>
+                                                @{
+                                                    string summary1 = !string.IsNullOrWhiteSpace(o.ItemsSummary) ? o.ItemsSummary : o.ProductName;
+                                                    var dishList1 = summary1.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                                                }
+                                                <div class="d-flex flex-column gap-1" style="max-width: 280px;">
+                                                    @foreach (var dish in dishList1)
+                                                    {
+                                                        <div class="badge bg-light text-dark border border-secondary border-opacity-25 text-wrap text-start py-1 px-2 fw-semibold shadow-xs">
+                                                            <i class="fa-solid fa-utensils text-danger me-1"></i> @dish.Trim()
+                                                        </div>
+                                                    }
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border font-monospace" style="font-size: 0.72rem;">
+                                                        Total: @o.Quantity item(s)
+                                                    </span>
+                                                </div>
                                             </td>
                                             <td>
                                                 @{
@@ -523,8 +538,19 @@
                                             <small class="text-muted d-block" style="font-size: 0.72rem;">Distance: @(o.DistanceKm > 0 ? o.DistanceKm.ToString("0.0") : "3.5") km</small>
                                         </td>
                                         <td>
-                                            <span class="text-dark small d-block text-truncate" style="max-width: 180px;">@o.ProductName</span>
-                                            <span class="badge bg-light text-dark border">@o.Quantity item(s)</span>
+                                            @{
+                                                string summary2 = !string.IsNullOrWhiteSpace(o.ItemsSummary) ? o.ItemsSummary : o.ProductName;
+                                                var dishList2 = summary2.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                                            }
+                                            <div class="d-flex flex-column gap-1" style="max-width: 250px;">
+                                                @foreach (var dish in dishList2)
+                                                {
+                                                    <div class="badge bg-light text-dark border text-wrap text-start py-1 px-2 small">
+                                                        <i class="fa-solid fa-utensils text-primary me-1"></i> @dish.Trim()
+                                                    </div>
+                                                }
+                                            </div>
+                                            <small class="text-muted d-block mt-1">Total: @o.Quantity items</small>
                                         </td>
                                         <td>
                                             <strong class="text-dark d-block">&#8377;@o.TotalAmount</strong>
@@ -908,7 +934,7 @@
                 if (alertBox) {
                     document.getElementById('alertOrderIdBadge').innerText = 'Order #' + latest.OrderId;
                     document.getElementById('alertOrderDetails').innerHTML = 
-                        '<strong>' + latest.CustomerName + '</strong> (' + latest.DeliveryCity + ') ordered <strong>' + latest.ProductName + '</strong> (' + latest.Quantity + ' items). ' +
+                        '<strong>' + latest.CustomerName + '</strong> (' + latest.DeliveryCity + ') ordered <strong>' + (latest.ItemsSummary || latest.ProductName) + '</strong> (' + latest.Quantity + ' items). ' +
                         'Total: <strong>&#8377;' + latest.TotalAmount + '</strong> &bull; Address: ' + latest.DeliveryAddress;
                     document.getElementById('alertPrepBadge').innerHTML = 
                         '<i class="fa-regular fa-clock me-1"></i> Kitchen Preparation Allotted: ' + latest.PrepTimeMinutes + ' Min';

@@ -252,7 +252,10 @@ namespace MVConFramework.Models
                         o.OrderId, o.InvoiceNumber, o.StoreId, o.StoreName, s.Address AS StoreAddress, s.State AS StoreState, s.FssaiLicenseNo,
                         o.CustomerName, o.DeliveryAddress, o.DeliveryCity, o.DeliveryState, o.OrderDate, o.ProductName, o.Quantity,
                         o.TotalAmount, o.PlatformFee, o.PaymentMethod, o.OrderStatus, o.PreparationTimeMinutes,
-                        o.EstimatedDeliveryMinutes, o.DistanceKm, o.AssignedAgentName, o.AssignedAgentPhone
+                        o.EstimatedDeliveryMinutes, o.DistanceKm, o.AssignedAgentName, o.AssignedAgentPhone,
+                        o.DeliveryOtp, ISNULL(o.IsOtpVerified, 0) AS IsOtpVerified,
+                        o.CustomerPhone, o.ItemsSummary, o.CreatedAt,
+                        DATEDIFF(SECOND, o.CreatedAt, GETDATE()) AS SecondsSinceCreation
                     FROM hra.Orders o
                     LEFT JOIN hra.Stores s ON o.StoreId = s.StoreId
                     WHERE o.OrderId = @OrderId", con))
@@ -281,6 +284,12 @@ namespace MVConFramework.Models
                                 Quantity = Convert.ToInt32(dr["Quantity"]),
                                 TotalAmount = Convert.ToDecimal(dr["TotalAmount"]),
                                 PlatformFee = dr["PlatformFee"] != DBNull.Value ? Convert.ToDecimal(dr["PlatformFee"]) : 0m,
+                                DeliveryOtp = dr["DeliveryOtp"] != DBNull.Value ? dr["DeliveryOtp"].ToString() : null,
+                                IsOtpVerified = dr["IsOtpVerified"] != DBNull.Value && Convert.ToBoolean(dr["IsOtpVerified"]),
+                                CustomerPhone = dr["CustomerPhone"] != DBNull.Value ? dr["CustomerPhone"].ToString() : null,
+                                ItemsSummary = dr["ItemsSummary"] != DBNull.Value ? dr["ItemsSummary"].ToString() : dr["ProductName"].ToString(),
+                                CancellationSecondsRemaining = dr["SecondsSinceCreation"] != DBNull.Value ? Math.Max(0, 30 - Convert.ToInt32(dr["SecondsSinceCreation"])) : 0,
+                                CanCancel = (dr["OrderStatus"] != DBNull.Value && dr["OrderStatus"].ToString() == "Placed" && dr["SecondsSinceCreation"] != DBNull.Value && Convert.ToInt32(dr["SecondsSinceCreation"]) <= 30),
                                 PaymentMethod = dr["PaymentMethod"].ToString(),
                                 OrderStatus = dr["OrderStatus"] != DBNull.Value ? dr["OrderStatus"].ToString() : "Delivered",
                                 PreparationTimeMinutes = dr["PreparationTimeMinutes"] != DBNull.Value ? Convert.ToInt32(dr["PreparationTimeMinutes"]) : 15,
@@ -307,7 +316,10 @@ namespace MVConFramework.Models
                         o.OrderId, o.InvoiceNumber, o.StoreId, o.StoreName, s.Address AS StoreAddress,
                         o.CustomerName, o.DeliveryAddress, o.DeliveryCity, o.OrderStatus,
                         o.PreparationTimeMinutes, o.EstimatedDeliveryMinutes, o.DistanceKm,
-                        o.AssignedAgentName, o.AssignedAgentPhone, o.OrderDate, o.TotalAmount, o.ProductName
+                        o.AssignedAgentName, o.AssignedAgentPhone, o.OrderDate, o.TotalAmount, o.ProductName,
+                        o.DeliveryOtp, ISNULL(o.IsOtpVerified, 0) AS IsOtpVerified,
+                        o.CustomerPhone, o.ItemsSummary, o.CreatedAt,
+                        DATEDIFF(SECOND, o.CreatedAt, GETDATE()) AS SecondsSinceCreation
                     FROM hra.Orders o
                     LEFT JOIN hra.Stores s ON o.StoreId = s.StoreId
                     WHERE o.OrderId = @OrderId", con))
@@ -343,7 +355,13 @@ namespace MVConFramework.Models
                                 TotalAmount = Convert.ToDecimal(dr["TotalAmount"]),
                                 ProductName = dr["ProductName"].ToString(),
                                 ElapsedMinutes = elapsed,
-                                RemainingPrepMinutes = remaining
+                                RemainingPrepMinutes = remaining,
+                                DeliveryOtp = dr["DeliveryOtp"] != DBNull.Value ? dr["DeliveryOtp"].ToString() : null,
+                                IsOtpVerified = dr["IsOtpVerified"] != DBNull.Value && Convert.ToBoolean(dr["IsOtpVerified"]),
+                                CustomerPhone = dr["CustomerPhone"] != DBNull.Value ? dr["CustomerPhone"].ToString() : null,
+                                ItemsSummary = dr["ItemsSummary"] != DBNull.Value ? dr["ItemsSummary"].ToString() : dr["ProductName"].ToString(),
+                                CancellationSecondsRemaining = dr["SecondsSinceCreation"] != DBNull.Value ? Math.Max(0, 30 - Convert.ToInt32(dr["SecondsSinceCreation"])) : 0,
+                                CanCancel = (dr["OrderStatus"] != DBNull.Value && dr["OrderStatus"].ToString() == "Placed" && dr["SecondsSinceCreation"] != DBNull.Value && Convert.ToInt32(dr["SecondsSinceCreation"]) <= 30)
                             };
                         }
                     }
@@ -376,6 +394,64 @@ namespace MVConFramework.Models
             return false;
         }
 
+        // 6b. Verify Delivery OTP and Complete Delivery (Strict Rider OTP Verification)
+        public bool VerifyDeliveryOtp(int orderId, int agentId, string otp, out string message)
+        {
+            message = string.Empty;
+            using (var con = new SqlConnection(_cnStr))
+            {
+                using (var cmd = new SqlCommand("hra.usp_VerifyDeliveryOtpAndComplete", con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@OrderId", orderId);
+                    cmd.Parameters.AddWithValue("@AgentId", agentId);
+                    cmd.Parameters.AddWithValue("@EnteredOtp", (object)otp?.Trim() ?? string.Empty);
+
+                    con.Open();
+                    using (var dr = cmd.ExecuteReader())
+                    {
+                        if (dr.Read())
+                        {
+                            bool success = Convert.ToBoolean(dr["IsSuccess"]);
+                            message = dr["Message"] != DBNull.Value ? dr["Message"].ToString() : "";
+                            return success;
+                        }
+                    }
+                }
+            }
+            message = "Unable to connect to database for OTP verification.";
+            return false;
+        }
+
+        // 6c. Cancel Customer Order (Within 30-Second Grace Window)
+        public bool CancelCustomerOrder(int orderId, int? customerId, string reason, out string message)
+        {
+            message = string.Empty;
+            using (var con = new SqlConnection(_cnStr))
+            {
+                using (var cmd = new SqlCommand("hra.usp_CancelCustomerOrder", con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@OrderId", orderId);
+                    cmd.Parameters.AddWithValue("@CustomerId", customerId.HasValue ? (object)customerId.Value : DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Reason", string.IsNullOrWhiteSpace(reason) ? "Cancelled by customer within 30-second grace window" : reason.Trim());
+
+                    con.Open();
+                    using (var dr = cmd.ExecuteReader())
+                    {
+                        if (dr.Read())
+                        {
+                            bool success = Convert.ToBoolean(dr["IsSuccess"]);
+                            message = dr["Message"] != DBNull.Value ? dr["Message"].ToString() : "";
+                            return success;
+                        }
+                    }
+                }
+            }
+            message = "Unable to connect to database to cancel order.";
+            return false;
+        }
+
         // 7. Get Customer Orders History
         public List<Orders> GetCustomerOrders(string customerName = null, int? customerId = null)
         {
@@ -388,7 +464,7 @@ namespace MVConFramework.Models
                         PaymentMethod, DeliveryCity, ISNULL(OrderStatus, 'Delivered') AS OrderStatus,
                         ISNULL(PreparationTimeMinutes, 15) AS PreparationTimeMinutes,
                         AssignedAgentName, AssignedAgentPhone, DeliveryAddress, EstimatedDeliveryMinutes,
-                        DistanceKm, InvoiceNumber, PlatformFee, CreatedAt, CustomerId
+                        DistanceKm, InvoiceNumber, PlatformFee, CreatedAt, CustomerId, DeliveryOtp, ISNULL(IsOtpVerified, 0) AS IsOtpVerified
                     FROM hra.Orders
                     WHERE (@CustomerName IS NULL OR LOWER(CustomerName) = LOWER(@CustomerName) OR CustomerName LIKE '%' + @CustomerName + '%')
                        OR (@CustomerId IS NOT NULL AND CustomerId = @CustomerId)
@@ -424,7 +500,9 @@ namespace MVConFramework.Models
                                 EstimatedDeliveryMinutes = dr["EstimatedDeliveryMinutes"] != DBNull.Value ? Convert.ToInt32(dr["EstimatedDeliveryMinutes"]) : 45,
                                 DistanceKm = dr["DistanceKm"] != DBNull.Value ? Convert.ToDecimal(dr["DistanceKm"]) : 3.5m,
                                 InvoiceNumber = dr["InvoiceNumber"] != DBNull.Value ? dr["InvoiceNumber"].ToString() : null,
-                                PlatformFee = dr["PlatformFee"] != DBNull.Value ? Convert.ToDecimal(dr["PlatformFee"]) : 0m
+                                PlatformFee = dr["PlatformFee"] != DBNull.Value ? Convert.ToDecimal(dr["PlatformFee"]) : 0m,
+                                DeliveryOtp = dr["DeliveryOtp"] != DBNull.Value ? dr["DeliveryOtp"].ToString() : null,
+                                IsOtpVerified = dr["IsOtpVerified"] != DBNull.Value && Convert.ToBoolean(dr["IsOtpVerified"])
                             });
                         }
                     }
@@ -532,7 +610,15 @@ namespace MVConFramework.Models
                                     PlatformFee = dr["PlatformFee"] != DBNull.Value ? Convert.ToDecimal(dr["PlatformFee"]) : 0m,
                                     PaymentMethod = dr["PaymentMethod"] != DBNull.Value ? dr["PaymentMethod"].ToString() : "UPI",
                                     OrderStatus = dr["OrderStatus"] != DBNull.Value ? dr["OrderStatus"].ToString() : "Delivered",
-                                    DeliveryCity = dr["DeliveryCity"] != DBNull.Value ? dr["DeliveryCity"].ToString() : ""
+                                    DeliveryCity = dr["DeliveryCity"] != DBNull.Value ? dr["DeliveryCity"].ToString() : "",
+                                    DeliveryAddress = dr["DeliveryAddress"] != DBNull.Value ? dr["DeliveryAddress"].ToString() : "",
+                                    ItemsSummary = dr["ItemsSummary"] != DBNull.Value ? dr["ItemsSummary"].ToString() : (dr["ProductName"] != DBNull.Value ? dr["ProductName"].ToString() : ""),
+                                    CustomerPhone = dr["CustomerPhone"] != DBNull.Value ? dr["CustomerPhone"].ToString() : null,
+                                    PreparationTimeMinutes = dr["PreparationTimeMinutes"] != DBNull.Value ? Convert.ToInt32(dr["PreparationTimeMinutes"]) : 15,
+                                    EstimatedDeliveryMinutes = dr["EstimatedDeliveryMinutes"] != DBNull.Value ? Convert.ToInt32(dr["EstimatedDeliveryMinutes"]) : 45,
+                                    DistanceKm = dr["DistanceKm"] != DBNull.Value ? Convert.ToDecimal(dr["DistanceKm"]) : 3.5m,
+                                    AssignedAgentName = dr["AssignedAgentName"] != DBNull.Value ? dr["AssignedAgentName"].ToString() : null,
+                                    AssignedAgentPhone = dr["AssignedAgentPhone"] != DBNull.Value ? dr["AssignedAgentPhone"].ToString() : null
                                 };
                                 vm.LiveOrders.Add(o);
                                 if (o.OrderStatus == "Placed" || o.OrderStatus == "Preparing")
@@ -892,6 +978,44 @@ namespace MVConFramework.Models
             return false;
         }
 
+        // Lookup Delivery Agent By Logged In UserId
+        public DeliveryAgent GetDeliveryAgentByUserId(int userId)
+        {
+            using (var con = new SqlConnection(_cnStr))
+            {
+                string sql = @"
+                    SELECT TOP 1 a.AgentId, a.FullName, a.PhoneNumber, a.VehicleType, a.VehicleNumber, a.City, a.IsActive, a.TotalDeliveries, a.Rating, a.TotalEarnings, a.AadhaarNumber
+                    FROM hra.DeliveryAgents a
+                    WHERE a.UserId = @UserId";
+                using (var cmd = new SqlCommand(sql, con))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    con.Open();
+                    using (var dr = cmd.ExecuteReader())
+                    {
+                        if (dr.Read())
+                        {
+                            return new DeliveryAgent
+                            {
+                                AgentId = Convert.ToInt32(dr["AgentId"]),
+                                FullName = dr["FullName"].ToString(),
+                                PhoneNumber = dr["PhoneNumber"] != DBNull.Value ? dr["PhoneNumber"].ToString() : null,
+                                VehicleType = dr["VehicleType"] != DBNull.Value ? dr["VehicleType"].ToString() : null,
+                                VehicleNumber = dr["VehicleNumber"] != DBNull.Value ? dr["VehicleNumber"].ToString() : null,
+                                City = dr["City"] != DBNull.Value ? dr["City"].ToString() : null,
+                                IsActive = Convert.ToBoolean(dr["IsActive"]),
+                                TotalDeliveries = Convert.ToInt32(dr["TotalDeliveries"]),
+                                Rating = Convert.ToDecimal(dr["Rating"]),
+                                TotalEarnings = Convert.ToDecimal(dr["TotalEarnings"]),
+                                AadhaarNumber = dr["AadhaarNumber"] != DBNull.Value ? dr["AadhaarNumber"].ToString() : ""
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
         public bool ToggleDeliveryAgentStatus(int agentId, bool isActive)
         {
             using (var con = new SqlConnection(_cnStr))
@@ -963,7 +1087,10 @@ namespace MVConFramework.Models
                                     PreparationTimeMinutes = Convert.ToInt32(dr["PreparationTimeMinutes"]),
                                     EstimatedDeliveryMinutes = Convert.ToInt32(dr["EstimatedDeliveryMinutes"]),
                                     DistanceKm = Convert.ToDecimal(dr["DistanceKm"]),
-                                    DeliveryEarnings = Convert.ToDecimal(dr["DeliveryEarnings"])
+                                    DeliveryEarnings = Convert.ToDecimal(dr["DeliveryEarnings"]),
+                                    CustomerPhone = dr["CustomerPhone"] != DBNull.Value ? dr["CustomerPhone"].ToString() : null,
+                                    ItemsSummary = dr["ItemsSummary"] != DBNull.Value ? dr["ItemsSummary"].ToString() : dr["ProductName"].ToString(),
+                                    IsOtpVerified = dr["IsOtpVerified"] != DBNull.Value && Convert.ToBoolean(dr["IsOtpVerified"])
                                 });
                             }
                         }

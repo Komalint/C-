@@ -58,5 +58,18 @@ namespace MVConFramework.Models
         public DateTime? CreatedAt { get; set; } = DateTime.Now;
         public int? CustomerId { get; set; }
         public decimal DeliveryEarnings { get; set; } = 60.00m;
+
+        // Delivery Verification OTP System
+        public string DeliveryOtp { get; set; }
+        public bool IsOtpVerified { get; set; }
+        public DateTime? OtpGeneratedAt { get; set; }
+        public DateTime? OtpVerifiedAt { get; set; }
+
+        // Contact, Items Details & Cancellation
+        public string CustomerPhone { get; set; }
+        public string ItemsSummary { get; set; }
+        public DateTime? CancelledAt { get; set; }
+        public string CancellationReason { get; set; }
+        public int CancellationGraceSecondsRemaining { get; set; }
     }
 }

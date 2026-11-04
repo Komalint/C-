@@ -32,18 +32,40 @@
                     </span>
                 </div>
 
+                @if (ViewBag.MissingAddressWarning != null)
+                {
+                    <div class="alert alert-warning border-warning rounded-4 p-3 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation text-warning fs-4"></i>
+                            <div>
+                                <strong class="d-block text-dark">Exact Doorstep Address Missing</strong>
+                                <small class="text-muted">@ViewBag.MissingAddressWarning</small>
+                            </div>
+                        </div>
+                        <a href="@Url.Action("Profile", "Customer")" class="btn btn-warning rounded-pill btn-sm px-3 fw-bold text-dark">
+                            <i class="fa-solid fa-id-card me-1"></i> Update Profile Address
+                        </a>
+                    </div>
+                }
+
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Customer Full Name</label>
+                        <label class="form-label small fw-semibold">Customer Full Name <span class="text-danger">*</span></label>
                         <input type="text" id="custNameInput" class="form-control rounded-3" value="@Model.CustomerName" required />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Phone Number (For Delivery Updates)</label>
-                        <input type="tel" id="custPhoneInput" class="form-control rounded-3" value="@Model.CustomerPhone" required />
+                        <label class="form-label small fw-semibold">Phone Number (For Delivery Updates) <span class="text-danger">*</span></label>
+                        <input type="tel" id="custPhoneInput" class="form-control rounded-3" value="@Model.CustomerPhone" maxlength="10" placeholder="10-digit phone" required />
                     </div>
                     <div class="col-12">
-                        <label class="form-label small fw-semibold">Complete Delivery Address</label>
-                        <input type="text" id="custAddressInput" class="form-control rounded-3" value="@Model.DeliveryAddress" required />
+                        <label class="form-label small fw-semibold">
+                            Exact Doorstep Delivery Address (Flat / House No., Building, Street, Landmark) <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" id="custAddressInput" class="form-control rounded-3 @(string.IsNullOrWhiteSpace(Model.DeliveryAddress) ? "is-invalid border-danger" : "")" 
+                               value="@Model.DeliveryAddress" placeholder="e.g. Flat 402, Sunshine Heights, 12th Main Road, Near City Mall" required />
+                        <small class="text-muted d-block mt-1" style="font-size: 0.74rem;">
+                            <i class="fa-solid fa-shield-halved text-success me-1"></i> Exact house/flat number is required so delivery riders can reach your doorstep directly.
+                        </small>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Delivery City</label>
@@ -352,17 +374,32 @@
                 return;
             }
 
-            // Copy customer inputs to hidden form fields
-            $("#formCustName").val($("#custNameInput").val());
-            $("#formCustPhone").val($("#custPhoneInput").val());
-            $("#formCustAddress").val($("#custAddressInput").val());
-            $("#formCustState").val($("#custStateSelect").val());
-
-            // Validate address
-            if (!$("#formCustAddress").val() || $("#formCustAddress").val().trim() === "") {
-                alert("Please provide a valid delivery address.");
+            var name = ($("#custNameInput").val() || "").trim();
+            if (!name) {
+                alert("Please enter customer full name.");
+                $("#custNameInput").focus();
                 return;
             }
+
+            var phone = ($("#custPhoneInput").val() || "").trim();
+            if (!phone || phone.length < 10) {
+                alert("Valid Phone Number Required:\nPlease enter a valid 10-digit mobile number for order and delivery coordination.");
+                $("#custPhoneInput").focus();
+                return;
+            }
+
+            var address = ($("#custAddressInput").val() || "").trim();
+            if (!address || address.length < 10) {
+                alert("Exact Delivery Address Required:\nPlease enter your complete flat/house no., building/street name, and landmark (minimum 10 characters) before placing order.");
+                $("#custAddressInput").focus().addClass("border-danger");
+                return;
+            }
+
+            // Copy customer inputs to hidden form fields
+            $("#formCustName").val(name);
+            $("#formCustPhone").val(phone);
+            $("#formCustAddress").val(address);
+            $("#formCustState").val($("#custStateSelect").val());
 
             // Submit form to trigger order placement and dynamic receipt generation
             $("#mainPaymentForm").submit();

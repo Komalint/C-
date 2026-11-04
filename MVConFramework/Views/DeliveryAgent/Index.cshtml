@@ -5,12 +5,12 @@
 
 <div class="py-4">
 
-    <!-- Top Header & Agent Selector -->
+    <!-- Top Header & Agent Details -->
     <div class="card border-0 rounded-4 shadow-sm p-4 mb-4 bg-white">
         <div class="row align-items-center">
             <div class="col-md-7">
                 <span class="badge bg-success rounded-pill px-3 py-1 mb-2">
-                    <i class="fa-solid fa-motorcycle me-1"></i> Delivery Partner Fleet (10 Active Riders)
+                    <i class="fa-solid fa-motorcycle me-1"></i> Delivery Partner Portal &bull; Verified Fleet Partner
                 </span>
                 <h3 class="fw-extrabold text-dark mb-1">
                     @(Model.Agent != null ? Model.Agent.FullName : "Delivery Partner")
@@ -23,21 +23,21 @@
             </div>
 
             <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex flex-column align-items-md-end gap-2">
-                <!-- Agent Switcher -->
-                <div class="d-flex align-items-center gap-2">
-                    <label class="small text-muted text-nowrap">Switch Rider:</label>
-                    <select class="form-select form-select-sm rounded-pill border shadow-sm px-3" onchange="location.href='@Url.Action("Index", "DeliveryAgent")?agentId=' + this.value;">
-                        @if (ViewBag.AllAgents != null)
-                        {
-                            foreach (var a in (List<MVConFramework.Models.DeliveryAgent>)ViewBag.AllAgents)
+                <!-- Agent Switcher (Visible ONLY to Administrator) -->
+                @if (ViewBag.AllAgents != null)
+                {
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="small text-muted text-nowrap">Admin Fleet Switcher:</label>
+                        <select class="form-select form-select-sm rounded-pill border shadow-sm px-3" onchange="location.href='@Url.Action("Index", "DeliveryAgent")?agentId=' + this.value;">
+                            @foreach (var a in (List<MVConFramework.Models.DeliveryAgent>)ViewBag.AllAgents)
                             {
                                 <option value="@a.AgentId" @(Model.Agent != null && Model.Agent.AgentId == a.AgentId ? "selected" : "")>
                                     🛵 @a.FullName (@a.City) - @(a.IsActive ? "Online" : "Offline")
                                 </option>
                             }
-                        }
-                    </select>
-                </div>
+                        </select>
+                    </div>
+                }
 
                 <!-- Duty Toggle Form -->
                 @if (Model.Agent != null)
@@ -158,25 +158,58 @@
                                 <div class="text-muted small ps-4">@o.DeliveryCity | Kitchen Allotment: @o.PreparationTimeMinutes min</div>
                             </div>
 
-                            <!-- Delivery Info -->
+                            <!-- Delivery Info (Customer Details) -->
                             <div class="p-3 bg-white rounded-3 border mb-3">
                                 <div class="d-flex align-items-center gap-2 mb-1">
                                     <i class="fa-solid fa-house text-success"></i>
                                     <strong class="text-dark">Deliver to Customer:</strong>
                                 </div>
                                 <div class="fw-bold text-dark ps-4">@o.CustomerName</div>
-                                <div class="text-muted small ps-4">@o.DeliveryAddress, @o.DeliveryCity (Distance: @o.DistanceKm km)</div>
+                                <div class="text-muted small ps-4">
+                                    <i class="fa-solid fa-location-dot text-danger me-1"></i> @o.DeliveryAddress, @o.DeliveryCity (Distance: @o.DistanceKm km)
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(o.CustomerPhone))
+                                {
+                                    <div class="ps-4 mt-2">
+                                        <a href="tel:@o.CustomerPhone" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold">
+                                            <i class="fa-solid fa-phone me-1"></i> Call Customer: @o.CustomerPhone
+                                        </a>
+                                    </div>
+                                }
+                                <div class="ps-4 mt-2 small text-muted">
+                                    <i class="fa-solid fa-utensils text-secondary me-1"></i> Dishes: <strong class="text-dark">@(string.IsNullOrWhiteSpace(o.ItemsSummary) ? o.ProductName : o.ItemsSummary)</strong>
+                                </div>
                             </div>
 
-                            <!-- Action Button -->
-                            @using (Html.BeginForm("CompleteDelivery", "DeliveryAgent", FormMethod.Post, new { @class = "mt-auto" }))
-                            {
-                                <input type="hidden" name="orderId" value="@o.OrderId" />
-                                <input type="hidden" name="agentId" value="@(Model.Agent != null ? Model.Agent.AgentId : 1)" />
-                                <button type="submit" class="btn btn-success w-100 rounded-pill py-2 fw-bold shadow-sm">
-                                    <i class="fa-solid fa-circle-check me-2"></i> Mark Order Delivered (Credit &#8377;60)
-                                </button>
-                            }
+                            <!-- Doorstep Customer Delivery OTP Verification Form -->
+                            <div class="p-3 bg-light rounded-4 border mb-3 mt-auto">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <label class="small fw-bold text-dark d-flex align-items-center gap-1 mb-0">
+                                        <i class="fa-solid fa-shield-halved text-warning"></i> Customer Delivery OTP
+                                    </label>
+                                    <span class="badge bg-warning text-dark font-monospace" style="font-size: 0.7rem;">Required for Handover</span>
+                                </div>
+                                <p class="text-muted small mb-2" style="font-size: 0.76rem;">
+                                    Ask the customer for the 4-digit code shown on their tracking screen before handing over the food.
+                                </p>
+
+                                @using (Html.BeginForm("CompleteDelivery", "DeliveryAgent", FormMethod.Post, new { @class = "d-flex flex-column gap-2" }))
+                                {
+                                    <input type="hidden" name="orderId" value="@o.OrderId" />
+                                    <input type="hidden" name="agentId" value="@(Model.Agent != null ? Model.Agent.AgentId : 1)" />
+                                    <div class="input-group shadow-sm">
+                                        <span class="input-group-text bg-white border-end-0 text-warning">
+                                            <i class="fa-solid fa-key"></i>
+                                        </span>
+                                        <input type="text" name="otp" class="form-control font-monospace fw-bold text-center border-start-0 ps-0" 
+                                               placeholder="4-digit OTP" maxlength="6" autocomplete="off" required 
+                                               style="letter-spacing: 4px; font-size: 1.15rem;" />
+                                        <button type="submit" class="btn btn-success fw-bold px-3">
+                                            <i class="fa-solid fa-check-double me-1"></i> Verify & Deliver
+                                        </button>
+                                    </div>
+                                }
+                            </div>
                         </div>
                     </div>
                 }

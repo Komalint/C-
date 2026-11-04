@@ -220,6 +220,7 @@
     <Content Include="Views\Customer\RestaurantMenu.cshtml" />
     <Content Include="Views\Customer\Checkout.cshtml" />
     <Content Include="Views\Customer\Receipt.cshtml" />
+    <Content Include="Views\Customer\Profile.cshtml" />
     <Content Include="Views\Customer\TrackOrder.cshtml" />
     <Content Include="Views\Customer\MyOrders.cshtml" />
     <Content Include="Views\Restaurant\Index.cshtml" />

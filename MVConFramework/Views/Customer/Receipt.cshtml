@@ -25,6 +25,44 @@
                 </a>
             </div>
 
+            @if (Model.OrderStatus == "Cancelled")
+            {
+                <div class="alert alert-danger border-danger rounded-4 p-4 shadow-sm mb-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-danger text-white rounded-circle p-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px;">
+                            <i class="fa-solid fa-ban fs-3"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1 text-danger">Order #@Model.OrderId Has Been Cancelled</h5>
+                            <p class="small text-muted mb-0">This order was cancelled by the customer within the 30-second cancellation window.</p>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (Model.CanCancel || (Model.OrderStatus == "Placed" && Model.CancellationSecondsRemaining > 0))
+            {
+                <div class="alert alert-warning border-warning rounded-4 p-3 shadow-sm mb-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3" id="cancellationCard">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-warning text-dark rounded-circle p-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px;">
+                            <i class="fa-solid fa-stopwatch fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1 text-dark">
+                                30-Second Cancellation Window Active
+                            </h6>
+                            <p class="small text-muted mb-0">
+                                Changed your mind? You can cancel this order within <strong class="text-danger fs-6" id="cancelCountdown">@Model.CancellationSecondsRemaining</strong> seconds.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <button type="button" class="btn btn-outline-danger rounded-pill fw-bold px-4 py-2" id="cancelOrderBtn" onclick="confirmCancelOrder(@Model.OrderId)">
+                            <i class="fa-solid fa-ban me-1"></i> Cancel Order
+                        </button>
+                    </div>
+                </div>
+            }
+
             <!-- Dynamic Invoice Card -->
             <div class="card border-0 rounded-4 shadow-lg p-5 bg-white position-relative overflow-hidden" id="printableReceipt">
 
@@ -156,3 +194,53 @@
         </div>
     </div>
 </div>
+
+@section scripts {
+    <script>
+        let cancelSeconds = @Model.CancellationSecondsRemaining;
+        if (cancelSeconds > 0 && "@Model.OrderStatus" === "Placed") {
+            const cancelTimer = setInterval(function () {
+                cancelSeconds--;
+                const countdownEl = document.getElementById('cancelCountdown');
+                if (countdownEl) countdownEl.innerText = cancelSeconds;
+
+                if (cancelSeconds <= 0) {
+                    clearInterval(cancelTimer);
+                    const card = document.getElementById('cancellationCard');
+                    if (card) {
+                        card.className = 'alert alert-info border-info rounded-4 p-3 shadow-sm mb-4 d-flex align-items-center gap-3';
+                        card.innerHTML = `
+                            <i class="fa-solid fa-circle-check text-info fs-4"></i>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">Cancellation window closed</h6>
+                                <small class="text-muted">Order is confirmed. The kitchen has received your order for preparation.</small>
+                            </div>
+                        `;
+                    }
+                }
+            }, 1000);
+        }
+
+        function confirmCancelOrder(oId) {
+            if (!confirm("Are you sure you want to cancel this order? This action cannot be undone.")) {
+                return;
+            }
+            $.ajax({
+                url: '@Url.Action("CancelOrder", "Customer")',
+                type: 'POST',
+                data: { orderId: oId, reason: "Cancelled by customer within 30-second grace window" },
+                success: function (res) {
+                    if (res && res.success) {
+                        alert(res.message);
+                        location.reload();
+                    } else {
+                        alert(res.message || "Unable to cancel order.");
+                    }
+                },
+                error: function () {
+                    alert("Error communicating with server.");
+                }
+            });
+        }
+    </script>
+}

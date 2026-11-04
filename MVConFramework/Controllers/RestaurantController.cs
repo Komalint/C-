@@ -129,6 +129,7 @@ namespace MVConFramework.Controllers
                         DeliveryAddress = !string.IsNullOrWhiteSpace(o.DeliveryAddress) ? o.DeliveryAddress : "Customer Address",
                         DeliveryCity = o.DeliveryCity,
                         ProductName = o.ProductName,
+                        ItemsSummary = !string.IsNullOrWhiteSpace(o.ItemsSummary) ? o.ItemsSummary : o.ProductName,
                         Quantity = o.Quantity,
                         TotalAmount = o.TotalAmount,
                         PrepTimeMinutes = o.PreparationTimeMinutes,

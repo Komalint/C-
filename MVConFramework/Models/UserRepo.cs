@@ -11,6 +11,87 @@ namespace MVConFramework.Models
     {
         private readonly string _cnStr = ConfigurationManager.ConnectionStrings["DBConn"].ConnectionString;
 
+        // 0. Get User By ID
+        public User GetUserById(int userId)
+        {
+            User user = null;
+            using (var con = new SqlConnection(_cnStr))
+            {
+                string sql = "SELECT TOP 1 UserId, UserName, Email, PhoneNumber, Gender, City, State, AddressLine, Landmark, Pincode, Role, IsActive, CreatedDate FROM dbo.UserTbl WHERE UserId = @UserId";
+                using (var cmd = new SqlCommand(sql, con))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    con.Open();
+                    using (var dr = cmd.ExecuteReader())
+                    {
+                        if (dr.Read())
+                        {
+                            user = new User
+                            {
+                                UserId = Convert.ToInt32(dr["UserId"]),
+                                UserName = dr["UserName"].ToString(),
+                                Email = dr["Email"].ToString(),
+                                PhoneNumber = dr["PhoneNumber"] != DBNull.Value ? dr["PhoneNumber"].ToString() : null,
+                                Gender = dr["Gender"] != DBNull.Value ? dr["Gender"].ToString() : null,
+                                City = dr["City"] != DBNull.Value ? dr["City"].ToString() : null,
+                                State = dr["State"] != DBNull.Value ? dr["State"].ToString() : null,
+                                AddressLine = dr["AddressLine"] != DBNull.Value ? dr["AddressLine"].ToString() : null,
+                                Landmark = dr["Landmark"] != DBNull.Value ? dr["Landmark"].ToString() : null,
+                                Pincode = dr["Pincode"] != DBNull.Value ? dr["Pincode"].ToString() : null,
+                                Role = dr["Role"] != DBNull.Value ? dr["Role"].ToString() : "User",
+                                IsActive = Convert.ToBoolean(dr["IsActive"]),
+                                CreatedDate = Convert.ToDateTime(dr["CreatedDate"])
+                            };
+                        }
+                    }
+                }
+            }
+            return user;
+        }
+
+        // 0b. Update Customer Profile & Exact Address
+        public bool UpdateUserProfile(User user, out string message)
+        {
+            message = string.Empty;
+            using (var con = new SqlConnection(_cnStr))
+            {
+                string sql = @"
+                    UPDATE dbo.UserTbl
+                    SET UserName = @UserName,
+                        PhoneNumber = @PhoneNumber,
+                        Gender = @Gender,
+                        AddressLine = @AddressLine,
+                        Landmark = @Landmark,
+                        City = @City,
+                        State = @State,
+                        Pincode = @Pincode
+                    WHERE UserId = @UserId";
+
+                using (var cmd = new SqlCommand(sql, con))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", user.UserId);
+                    cmd.Parameters.AddWithValue("@UserName", (object)user.UserName ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@PhoneNumber", (object)user.PhoneNumber ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Gender", (object)user.Gender ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@AddressLine", (object)user.AddressLine ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Landmark", (object)user.Landmark ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@City", (object)user.City ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@State", (object)user.State ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Pincode", (object)user.Pincode ?? DBNull.Value);
+
+                    con.Open();
+                    int affected = cmd.ExecuteNonQuery();
+                    if (affected > 0)
+                    {
+                        message = "Profile & Delivery Address updated successfully!";
+                        return true;
+                    }
+                }
+            }
+            message = "User not found or update failed.";
+            return false;
+        }
+
         // 1. Authenticate / Login User
         public User ValidateUser(string emailOrUsername, string password)
         {
@@ -111,44 +192,7 @@ namespace MVConFramework.Models
             }
         }
 
-        // 3. Get User By Id
-        public User GetUserById(int userId)
-        {
-            User user = null;
 
-            using (SqlConnection con = new SqlConnection(_cnStr))
-            {
-                using (SqlCommand cmd = new SqlCommand("dbo.usp_GetUserById", con))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@UserId", userId);
-
-                    con.Open();
-
-                    using (SqlDataReader dr = cmd.ExecuteReader())
-                    {
-                        if (dr.Read())
-                        {
-                            user = new User
-                            {
-                                UserId = Convert.ToInt32(dr["UserId"]),
-                                UserName = dr["UserName"].ToString(),
-                                Email = dr["Email"].ToString(),
-                                PhoneNumber = dr["PhoneNumber"] != DBNull.Value ? dr["PhoneNumber"].ToString() : null,
-                                Gender = dr["Gender"] != DBNull.Value ? dr["Gender"].ToString() : null,
-                                City = dr["City"] != DBNull.Value ? dr["City"].ToString() : null,
-                                State = dr["State"] != DBNull.Value ? dr["State"].ToString() : null,
-                                Role = dr["Role"] != DBNull.Value ? dr["Role"].ToString() : "User",
-                                IsActive = Convert.ToBoolean(dr["IsActive"]),
-                                CreatedDate = Convert.ToDateTime(dr["CreatedDate"])
-                            };
-                        }
-                    }
-                }
-            }
-
-            return user;
-        }
 
         // 4. Get Dashboard Statistics & Recent Orders
         public DashboardViewModel GetDashboardStats()

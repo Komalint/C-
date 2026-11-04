@@ -366,12 +366,15 @@
                                 <span>Explore Food</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link nav-link-custom" href="@Url.Action("MyOrders", "Customer")">
-                                <i class="fa-solid fa-receipt text-info"></i>
-                                <span>My Orders</span>
-                            </a>
-                        </li>
+                        @if (isAuthenticated && isCustomer)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom" href="@Url.Action("MyOrders", "Customer")">
+                                    <i class="fa-solid fa-receipt text-info"></i>
+                                    <span>My Orders</span>
+                                </a>
+                            </li>
+                        }
                     </ul>
                 }
 
@@ -397,41 +400,64 @@
                         </div>
                     }
 
-                    <!-- Notifications Dropdown (Live Real-Time Integration) -->
-                    <div class="dropdown flex-shrink-0 position-relative">
-                        <button type="button" class="notification-btn" id="notificationsDropdown" aria-expanded="false" title="Notifications">
-                            <i class="fa-regular fa-bell"></i>
-                            <span class="notification-badge" id="navNotifCount" style="display: none;">0</span>
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-end notification-menu p-0 shadow-lg" id="notificationsMenu" aria-labelledby="notificationsDropdown">
-                            <div class="notification-header">
-                                <span class="d-flex align-items-center gap-2">
-                                    <i class="fa-solid fa-bell text-danger"></i> Live Notifications
-                                </span>
-                                <span class="badge bg-danger rounded-pill" id="notifBadgeLabel">0 New</span>
-                            </div>
-                            <div id="notifListContainer">
-                                <div class="p-4 text-center text-muted small">
-                                    <div class="spinner-border spinner-border-sm text-danger mb-2" role="status"></div>
-                                    <p class="mb-0">Loading recent notifications...</p>
-                                </div>
-                            </div>
-                            <div class="p-2 text-center bg-light border-top">
-                                <button type="button" class="btn btn-link btn-sm text-decoration-none text-danger fw-semibold" onclick="markAllNotificationsRead()">
-                                    <i class="fa-solid fa-check-double me-1"></i> Mark all as read
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- User Account & Direct Visible Logout -->
                     @if (isAuthenticated)
                     {
+                        <!-- Notifications Dropdown (Live Real-Time Integration - Only for Logged In Users) -->
+                        <div class="dropdown flex-shrink-0 position-relative">
+                            <button type="button" class="notification-btn" id="notificationsDropdown" aria-expanded="false" title="Notifications">
+                                <i class="fa-regular fa-bell"></i>
+                                <span class="notification-badge" id="navNotifCount" style="display: none;">0</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end notification-menu p-0 shadow-lg" id="notificationsMenu" aria-labelledby="notificationsDropdown">
+                                <div class="notification-header">
+                                    <span class="d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-bell text-danger"></i> Live Notifications
+                                    </span>
+                                    <span class="badge bg-danger rounded-pill" id="notifBadgeLabel">0 New</span>
+                                </div>
+                                <div id="notifListContainer">
+                                    <div class="p-4 text-center text-muted small">
+                                        <div class="spinner-border spinner-border-sm text-danger mb-2" role="status"></div>
+                                        <p class="mb-0">Loading recent notifications...</p>
+                                    </div>
+                                </div>
+                                <div class="p-2 text-center bg-light border-top">
+                                    <button type="button" class="btn btn-link btn-sm text-decoration-none text-danger fw-semibold" onclick="markAllNotificationsRead()">
+                                        <i class="fa-solid fa-check-double me-1"></i> Mark all as read
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Account Menu & Direct Visible Logout -->
                         <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                            <!-- Active User Pill Badge -->
-                            <div class="d-flex align-items-center bg-dark bg-opacity-75 border border-secondary border-opacity-50 rounded-pill px-2 px-sm-3 py-1 text-light small text-nowrap">
-                                <i class="fa-solid fa-circle-user text-warning me-1 me-sm-2 fs-6"></i>
-                                <span class="text-truncate fw-bold" style="max-width: 110px;">@Session["UserName"]</span>
+                            <!-- Active User Dropdown with Profile Access -->
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-dark border border-secondary border-opacity-50 rounded-pill px-2 px-sm-3 py-1 dropdown-toggle text-light small fw-bold d-inline-flex align-items-center gap-1" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa-solid fa-circle-user text-warning fs-6"></i>
+                                    <span class="text-truncate" style="max-width: 110px;">@Session["UserName"]</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow" aria-labelledby="userMenuDropdown">
+                                    @if (isCustomer)
+                                    {
+                                        <li>
+                                            <a class="dropdown-item py-2" href="@Url.Action("Profile", "Customer")">
+                                                <i class="fa-solid fa-id-card text-info me-2"></i> My Profile & Address
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" href="@Url.Action("MyOrders", "Customer")">
+                                                <i class="fa-solid fa-receipt text-warning me-2"></i> My Orders
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    }
+                                    <li>
+                                        <a class="dropdown-item text-danger py-2" href="@Url.Action("Logout", "Account")">
+                                            <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Logout
+                                        </a>
+                                    </li>
+                                </ul>
                             </div>
 
                             <!-- PROMINENT DIRECT VISIBLE LOGOUT BUTTON -->
@@ -520,6 +546,10 @@
         }
 
         function loadRealtimeNotifications() {
+            @if (!isAuthenticated)
+            {
+                <text>return;</text>
+            }
             const roleToQuery = getEffectiveRole();
             $.ajax({
                 url: '@Url.Action("GetRecent", "Notification")',

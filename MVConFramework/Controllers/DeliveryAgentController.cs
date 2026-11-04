@@ -13,7 +13,23 @@ namespace MVConFramework.Controllers
 
         private int ResolveAgentId(int? agentId)
         {
-            if (agentId.HasValue && agentId.Value > 0)
+            string role = Session["UserRole"] != null ? Session["UserRole"].ToString() : "";
+            bool isAdmin = role.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+
+            // If user is a Rider/DeliveryAgent, strictly resolve from their own logged-in user profile
+            if (!isAdmin && Session["UserId"] != null)
+            {
+                int userId = Convert.ToInt32(Session["UserId"]);
+                var myAgent = _repo.GetDeliveryAgentByUserId(userId);
+                if (myAgent != null)
+                {
+                    Session["CurrentAgentId"] = myAgent.AgentId;
+                    return myAgent.AgentId;
+                }
+            }
+
+            // For Admin only, allow switching via agentId
+            if (isAdmin && agentId.HasValue && agentId.Value > 0)
             {
                 Session["CurrentAgentId"] = agentId.Value;
                 return agentId.Value;
@@ -24,14 +40,7 @@ namespace MVConFramework.Controllers
                 return Convert.ToInt32(Session["CurrentAgentId"]);
             }
 
-            var agents = _repo.GetDeliveryAgents();
-            if (agents != null && agents.Count > 0)
-            {
-                int defaultId = agents.First().AgentId;
-                Session["CurrentAgentId"] = defaultId;
-                return defaultId;
-            }
-
+            // Fallback: Agent 1 (Rajesh Kumar)
             return 1;
         }
 
@@ -41,7 +50,12 @@ namespace MVConFramework.Controllers
         {
             int aId = ResolveAgentId(agentId);
             var vm = _repo.GetDeliveryAgentDashboard(aId);
-            ViewBag.AllAgents = _repo.GetDeliveryAgents();
+            // DO NOT expose all agents to riders to guarantee rider order and privacy isolation
+            string role = Session["UserRole"] != null ? Session["UserRole"].ToString() : "";
+            if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                ViewBag.AllAgents = _repo.GetDeliveryAgents();
+            }
             ViewBag.ActiveTab = "DeliveryAgent";
             return View(vm);
         }
@@ -95,21 +109,43 @@ namespace MVConFramework.Controllers
             return RedirectToAction("Index", new { agentId });
         }
 
-        // POST: DeliveryAgent/CompleteDelivery
+        // POST: DeliveryAgent/CompleteDelivery (Strict Customer OTP Verification)
         [HttpPost]
         [CustomAuthorize(Roles = "DeliveryAgent,Rider,Admin")]
-        public ActionResult CompleteDelivery(int orderId, int agentId)
+        public ActionResult CompleteDelivery(int orderId, int agentId, string otp)
         {
-            bool ok = _repo.UpdateOrderStatus(orderId, "Delivered");
+            if (string.IsNullOrWhiteSpace(otp))
+            {
+                TempData["ErrorMessage"] = "Please enter the 4-digit Delivery OTP provided by the customer at the doorstep.";
+                return RedirectToAction("Index", new { agentId });
+            }
+
+            string message;
+            bool ok = _repo.VerifyDeliveryOtp(orderId, agentId, otp.Trim(), out message);
             if (ok)
             {
-                TempData["SuccessMessage"] = "Order #" + orderId + " marked as Delivered! ₹60 delivery fee has been credited to your earnings.";
+                TempData["SuccessMessage"] = "Delivery OTP Verified! Order #" + orderId + " delivered successfully. ₹60 delivery fee credited to your wallet.";
             }
             else
             {
-                TempData["ErrorMessage"] = "Failed to update order status.";
+                TempData["ErrorMessage"] = !string.IsNullOrEmpty(message) ? message : "Invalid Delivery OTP. Please verify with the customer.";
             }
             return RedirectToAction("Index", new { agentId });
+        }
+
+        // POST: DeliveryAgent/VerifyDeliveryOtpAjax
+        [HttpPost]
+        [CustomAuthorize(Roles = "DeliveryAgent,Rider,Admin")]
+        public JsonResult VerifyDeliveryOtpAjax(int orderId, int agentId, string otp)
+        {
+            if (string.IsNullOrWhiteSpace(otp))
+            {
+                return Json(new { success = false, message = "Please enter the 4-digit Delivery OTP." });
+            }
+
+            string message;
+            bool ok = _repo.VerifyDeliveryOtp(orderId, agentId, otp.Trim(), out message);
+            return Json(new { success = ok, message = message });
         }
     }
 }

@@ -140,6 +140,24 @@ namespace MVConFramework.Controllers
                     }
                 }
 
+                // If logging in as Delivery Agent / Rider, bind their specific Agent profile
+                if (effectiveRole.Equals("DeliveryAgent", StringComparison.OrdinalIgnoreCase) || 
+                    effectiveRole.Equals("Rider", StringComparison.OrdinalIgnoreCase) || 
+                    (user.Role != null && (user.Role.Equals("DeliveryAgent", StringComparison.OrdinalIgnoreCase) || user.Role.Equals("Rider", StringComparison.OrdinalIgnoreCase))))
+                {
+                    var rider = _foodRepo.GetDeliveryAgentByUserId(user.UserId);
+                    if (rider != null)
+                    {
+                        Session["CurrentAgentId"] = rider.AgentId;
+                        Session["AgentName"] = rider.FullName;
+                    }
+                    else
+                    {
+                        if (user.UserId == 8) Session["CurrentAgentId"] = 1;
+                        else if (user.UserId == 1011) Session["CurrentAgentId"] = 1011;
+                    }
+                }
+
                 Session["LoginTime"] = DateTime.Now.ToString("dd MMM yyyy, hh:mm tt");
 
                 TempData["SuccessMessage"] = $"Welcome back, {user.UserName}! Logged in as {(Session["LoginRole"] ?? user.Role)}.";

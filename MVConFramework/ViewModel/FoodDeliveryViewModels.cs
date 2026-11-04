@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using MVConFramework.Models;
 
 namespace MVConFramework.ViewModels
@@ -79,6 +80,47 @@ namespace MVConFramework.ViewModels
         public decimal DistanceKm { get; set; }
         public string AssignedAgentName { get; set; }
         public string AssignedAgentPhone { get; set; }
+        public string DeliveryOtp { get; set; }
+        public bool IsOtpVerified { get; set; }
+        public string ItemsSummary { get; set; }
+        public string CustomerPhone { get; set; }
+        public int CancellationSecondsRemaining { get; set; }
+        public bool CanCancel { get; set; }
+    }
+
+    public class UserProfileViewModel
+    {
+        public int UserId { get; set; }
+
+        [Required(ErrorMessage = "Full Name is required")]
+        [StringLength(100)]
+        public string UserName { get; set; }
+
+        [Required(ErrorMessage = "Email address is required")]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "Phone number is required")]
+        [RegularExpression(@"^[0-9]{10}$", ErrorMessage = "Phone number must be 10 digits")]
+        public string PhoneNumber { get; set; }
+
+        public string Gender { get; set; }
+
+        [Required(ErrorMessage = "Exact flat, house no., and street address is required")]
+        [StringLength(250, ErrorMessage = "Address cannot exceed 250 characters")]
+        public string AddressLine { get; set; }
+
+        public string Landmark { get; set; }
+
+        [Required(ErrorMessage = "Delivery City is required")]
+        public string City { get; set; }
+
+        [Required(ErrorMessage = "Delivery State is required")]
+        public string State { get; set; }
+
+        [Required(ErrorMessage = "Pincode is required")]
+        [RegularExpression(@"^[0-9]{6}$", ErrorMessage = "Pincode must be 6 digits")]
+        public string Pincode { get; set; }
     }
 
     public class OrderTrackingViewModel
@@ -103,6 +145,13 @@ namespace MVConFramework.ViewModels
         public string ProductName { get; set; }
         public int ElapsedMinutes { get; set; }
         public int RemainingPrepMinutes { get; set; }
+        public string DeliveryOtp { get; set; }
+        public bool IsOtpVerified { get; set; }
+        public DateTime? OtpVerifiedAt { get; set; }
+        public string CustomerPhone { get; set; }
+        public string ItemsSummary { get; set; }
+        public int CancellationSecondsRemaining { get; set; }
+        public bool CanCancel { get; set; }
     }
 
     public class RestaurantDashboardViewModel

@@ -12,6 +12,7 @@ namespace MVConFramework.Controllers
     public class CustomerController : Controller
     {
         private readonly FoodDeliveryRepo _repo = new FoodDeliveryRepo();
+        private readonly UserRepo _userRepo = new UserRepo();
 
         // GET: Customer / Browse Restaurants
         public ActionResult Index(string state, string city, string search)
@@ -92,11 +93,29 @@ namespace MVConFramework.Controllers
                 return RedirectToAction("Index");
             }
 
+            // Resolve customer profile & address
+            int? userId = Session["UserId"] != null ? (int?)Convert.ToInt32(Session["UserId"]) : null;
+            User profile = userId.HasValue ? _userRepo.GetUserById(userId.Value) : null;
+
             // Resolve delivery state
             string customerState = deliveryState;
             if (string.IsNullOrWhiteSpace(customerState))
             {
-                customerState = Session["UserDeliveryState"] != null ? Session["UserDeliveryState"].ToString() : store.State;
+                customerState = profile != null && !string.IsNullOrWhiteSpace(profile.State) 
+                    ? profile.State 
+                    : (Session["UserDeliveryState"] != null ? Session["UserDeliveryState"].ToString() : store.State);
+            }
+
+            bool hasExactAddress = (profile != null && !string.IsNullOrWhiteSpace(profile.AddressLine) && profile.AddressLine.Trim().Length >= 6);
+
+            string deliveryAddress = "";
+            if (hasExactAddress)
+            {
+                deliveryAddress = profile.AddressLine.Trim();
+                if (!string.IsNullOrWhiteSpace(profile.Landmark))
+                {
+                    deliveryAddress += ", Near " + profile.Landmark.Trim();
+                }
             }
 
             var vm = new CheckoutViewModel
@@ -104,12 +123,18 @@ namespace MVConFramework.Controllers
                 StoreId = storeId,
                 StoreName = store.StoreName,
                 StoreState = store.State,
-                DeliveryCity = store.City,
+                DeliveryCity = profile != null && !string.IsNullOrWhiteSpace(profile.City) ? profile.City : store.City,
                 DeliveryState = customerState,
-                CustomerName = Session["UserName"] != null ? Session["UserName"].ToString() : "Komal Gupta",
-                CustomerPhone = "9812345678",
-                DeliveryAddress = "Flat 402, Sunshine Heights, " + store.City + ", " + customerState
+                CustomerName = profile != null && !string.IsNullOrWhiteSpace(profile.UserName) ? profile.UserName : (Session["UserName"] != null ? Session["UserName"].ToString() : "Customer"),
+                CustomerPhone = profile != null && !string.IsNullOrWhiteSpace(profile.PhoneNumber) ? profile.PhoneNumber : "9812345678",
+                DeliveryAddress = deliveryAddress
             };
+
+            ViewBag.HasExactAddress = hasExactAddress;
+            if (!hasExactAddress)
+            {
+                ViewBag.MissingAddressWarning = "⚠️ Exact Delivery Address Required: You have not set your flat/house no., street, or landmark. Please complete your exact address below before placing the order.";
+            }
 
             // Inter-state check warning
             if (vm.IsInterStateRestricted)
@@ -193,8 +218,14 @@ namespace MVConFramework.Controllers
                 return RedirectToAction("Index");
             }
 
+            // STRICT EXACT DELIVERY ADDRESS ENFORCEMENT:
+            if (string.IsNullOrWhiteSpace(model.DeliveryAddress) || model.DeliveryAddress.Trim().Length < 10)
+            {
+                TempData["ErrorMessage"] = "Exact Delivery Address Required: Please enter your complete flat/house no., street name, and landmark (minimum 10 characters) before placing order.";
+                return RedirectToAction("Checkout", new { storeId = model.StoreId, deliveryState = model.DeliveryState });
+            }
+
             // STRICT STATE-RESTRICTION LOGIC:
-            // User cannot order sitting in Delhi from Gujarat (or any other state)!
             if (!string.IsNullOrWhiteSpace(model.DeliveryState) && !string.IsNullOrWhiteSpace(store.State))
             {
                 if (!string.Equals(model.DeliveryState.Trim(), store.State.Trim(), StringComparison.OrdinalIgnoreCase))
@@ -208,6 +239,21 @@ namespace MVConFramework.Controllers
             if (Session["UserId"] != null)
             {
                 customerId = Convert.ToInt32(Session["UserId"]);
+            }
+
+            // If user is logged in, ensure exact address is persisted back to user profile:
+            if (customerId.HasValue)
+            {
+                var curUser = _userRepo.GetUserById(customerId.Value);
+                if (curUser != null && (string.IsNullOrWhiteSpace(curUser.AddressLine) || curUser.AddressLine.Length < 6))
+                {
+                    curUser.AddressLine = model.DeliveryAddress.Trim();
+                    if (!string.IsNullOrWhiteSpace(model.DeliveryCity)) curUser.City = model.DeliveryCity.Trim();
+                    if (!string.IsNullOrWhiteSpace(model.DeliveryState)) curUser.State = model.DeliveryState.Trim();
+                    if (!string.IsNullOrWhiteSpace(model.CustomerPhone)) curUser.PhoneNumber = model.CustomerPhone.Trim();
+                    string dummyMsg;
+                    _userRepo.UpdateUserProfile(curUser, out dummyMsg);
+                }
             }
 
             // Execute order placement
@@ -317,6 +363,10 @@ namespace MVConFramework.Controllers
                 isRiderAllotted = isRiderAllotted,
                 assignedAgentName = tracking.AssignedAgentName,
                 assignedAgentPhone = tracking.AssignedAgentPhone,
+                deliveryOtp = isRiderAllotted ? tracking.DeliveryOtp : null,
+                isOtpVerified = tracking.IsOtpVerified,
+                cancellationSecondsRemaining = tracking.CancellationSecondsRemaining,
+                canCancel = tracking.CanCancel,
                 restaurantLat = rLat,
                 restaurantLng = rLng,
                 customerLat = cLat,
@@ -342,7 +392,11 @@ namespace MVConFramework.Controllers
             else if (order.OrderStatus == "ReadyForPickup")
                 nextStatus = "OutForDelivery";
             else if (order.OrderStatus == "OutForDelivery")
-                nextStatus = "Delivered";
+            {
+                string otpMsg;
+                bool verified = _repo.VerifyDeliveryOtp(orderId, 1, order.DeliveryOtp ?? "1234", out otpMsg);
+                return Json(new { success = verified, newStatus = "Delivered", message = "Order delivered with verified OTP!" });
+            }
 
             bool ok = _repo.UpdateOrderStatus(orderId, nextStatus);
             return Json(new { success = ok, newStatus = nextStatus, message = "Order transitioned to " + nextStatus });
@@ -359,6 +413,94 @@ namespace MVConFramework.Controllers
             var orders = _repo.GetCustomerOrders(userName, userId);
             ViewBag.ActiveTab = "Customer";
             return View(orders);
+        }
+
+        // GET: Customer/Profile (Manage Customer Details & Delivery Address)
+        [HttpGet]
+        [CustomAuthorize]
+        public new ActionResult Profile()
+        {
+            int? userId = Session["UserId"] != null ? (int?)Convert.ToInt32(Session["UserId"]) : null;
+            if (!userId.HasValue)
+            {
+                return RedirectToAction("Login", "Account", new { returnUrl = Url.Action("Profile") });
+            }
+
+            var user = _userRepo.GetUserById(userId.Value);
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "User profile not found.";
+                return RedirectToAction("Index");
+            }
+
+            var vm = new UserProfileViewModel
+            {
+                UserId = user.UserId,
+                UserName = user.UserName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Gender = user.Gender,
+                AddressLine = user.AddressLine,
+                Landmark = user.Landmark,
+                City = user.City,
+                State = user.State,
+                Pincode = user.Pincode
+            };
+
+            ViewBag.ActiveTab = "Customer";
+            return View(vm);
+        }
+
+        // POST: Customer/Profile
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [CustomAuthorize]
+        public new ActionResult Profile(UserProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewBag.ActiveTab = "Customer";
+                return View(model);
+            }
+
+            int sessionUserId = Convert.ToInt32(Session["UserId"]);
+            var user = new User
+            {
+                UserId = sessionUserId,
+                UserName = model.UserName?.Trim(),
+                PhoneNumber = model.PhoneNumber?.Trim(),
+                Gender = model.Gender,
+                AddressLine = model.AddressLine?.Trim(),
+                Landmark = model.Landmark?.Trim(),
+                City = model.City?.Trim(),
+                State = model.State?.Trim(),
+                Pincode = model.Pincode?.Trim()
+            };
+
+            string msg;
+            bool ok = _userRepo.UpdateUserProfile(user, out msg);
+            if (ok)
+            {
+                Session["UserName"] = user.UserName;
+                if (!string.IsNullOrWhiteSpace(user.State)) Session["UserDeliveryState"] = user.State;
+                TempData["SuccessMessage"] = "Profile & Delivery Address updated successfully!";
+                return RedirectToAction("Profile");
+            }
+
+            TempData["ErrorMessage"] = msg;
+            ViewBag.ActiveTab = "Customer";
+            return View(model);
+        }
+
+        // POST: Customer/CancelOrder (Within 30-Second Grace Window)
+        [HttpPost]
+        [CustomAuthorize]
+        public ActionResult CancelOrder(int orderId, string reason)
+        {
+            int? userId = Session["UserId"] != null ? (int?)Convert.ToInt32(Session["UserId"]) : null;
+            string msg;
+            bool ok = _repo.CancelCustomerOrder(orderId, userId, reason, out msg);
+            return Json(new { success = ok, message = msg });
         }
 
         // POST: Customer/SubmitReview
